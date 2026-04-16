@@ -225,17 +225,22 @@ export async function updateUser(
   fields: { name?: string; bio?: string; theme?: string },
 ): Promise<User | undefined> {
   await initSchema();
-  const db = getDb();
+  if (!fields.name && !fields.bio && !fields.theme) return getUserById(id);
   if (!fields.name && !fields.bio && !fields.theme) return getUserById(id);
 
+  // Build SET clause dynamically — column names are controlled by the keys above,
+  // values are already validated as strings by the caller.
   const sets: string[] = [];
-  const vals: (string | undefined)[] = [];
+  const vals: string[] = [];
   if (fields.name !== undefined)  { sets.push('name = $' + (vals.length + 1)); vals.push(fields.name); }
   if (fields.bio !== undefined)   { sets.push('bio = $' + (vals.length + 1)); vals.push(fields.bio); }
   if (fields.theme !== undefined) { sets.push('theme = $' + (vals.length + 1)); vals.push(fields.theme); }
   vals.push(id);
 
-  await db`UPDATE users SET ${db.raw(sets.join(', '))} WHERE id = ${id}`;
+  const db = getDb();
+  const setClause = sets.join(', ');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await db.any(`UPDATE users SET ${setClause} WHERE id = $${vals.length}` as any, vals);
   return getUserById(id);
 }
 
@@ -777,6 +782,7 @@ export async function updateUserPreferences(
   preferences: Partial<UserPreferences>,
 ): Promise<UserPreferences> {
   await initSchema();
+
   const db = getDb();
 
   const existing = await db`SELECT 1 FROM user_preferences WHERE user_id = ${userId}`;
@@ -795,7 +801,8 @@ export async function updateUserPreferences(
     sets.push('notif_messages = $' + (vals.length + 1)); vals.push(preferences.notificationSettings.messages);
   }
   vals.push(userId);
-
-  await db`UPDATE user_preferences SET ${db.raw(sets.join(', '))} WHERE user_id = ${userId}`;
+  const setClause = sets.join(', ');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await db.any(`UPDATE user_preferences SET ${setClause} WHERE user_id = $${vals.length}` as any, vals);
   return (await getUserPreferences(userId))!;
 }

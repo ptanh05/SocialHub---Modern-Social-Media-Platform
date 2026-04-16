@@ -1,19 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import { usePosts } from '@/hooks/use-posts';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { ImageIcon, X } from 'lucide-react';
 import Image from 'next/image';
 
-interface CreatePostProps {
-  onPostCreated?: () => void;
-}
-
-export function CreatePost({ onPostCreated }: CreatePostProps) {
+export function CreatePost({ onPostCreated }: { onPostCreated?: () => void }) {
   const { user } = useAuth();
   const { createPost } = usePosts();
   const [content, setContent] = useState('');
@@ -42,7 +38,7 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
       setCharCount(0);
       onPostCreated?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create post');
+      setError(err instanceof Error ? err.message : 'Tạo bài viết thất bại');
     } finally {
       setLoading(false);
     }
@@ -89,7 +85,7 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
 
           <div className="relative">
             <textarea
-              placeholder="What's on your mind?"
+              placeholder="Bạn đang nghĩ gì?"
               value={content}
               onChange={(e) => {
                 setContent(e.target.value);
@@ -112,7 +108,7 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
             <div className="relative w-full h-40 rounded-lg overflow-hidden bg-muted animate-fade-in-scale">
               <Image
                 src={image}
-                alt="Post preview"
+                alt="Xem trước bài viết"
                 fill
                 className="object-cover"
               />
@@ -137,7 +133,7 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
               />
               <div className="flex items-center gap-2 text-primary hover:opacity-80 transition-all duration-200 group-hover:scale-105">
                 <ImageIcon className="w-5 h-5" />
-                <span className="text-sm">Add image</span>
+                <span className="text-sm">Thêm ảnh</span>
               </div>
             </label>
             <Button
@@ -148,10 +144,10 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
               {loading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Posting...
+                  Đang đăng...
                 </span>
               ) : (
-                'Post'
+                'Đăng bài'
               )}
             </Button>
           </div>

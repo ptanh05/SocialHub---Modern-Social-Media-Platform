@@ -17,7 +17,7 @@ export default function BlockedPage() {
   if (!user) return null;
 
   const handleUnblock = async (blockedId: string) => {
-    if (!confirm('Unblock this user?')) return;
+    if (!confirm('Bỏ chặn người dùng này?')) return;
     try {
       await fetch('/api/blocked', {
         method: 'DELETE',
@@ -26,7 +26,7 @@ export default function BlockedPage() {
       });
       mutate((prev: any[]) => prev.filter((u: any) => u.id !== blockedId), false);
     } catch (error) {
-      console.error('Failed to unblock:', error);
+      console.error('Bỏ chặn thất bại:', error);
     }
   };
 
@@ -34,14 +34,14 @@ export default function BlockedPage() {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-center gap-3 mb-8">
         <Ban className="w-8 h-8 text-primary" />
-        <h1 className="text-3xl font-bold text-foreground">Blocked Users</h1>
+        <h1 className="text-3xl font-bold text-foreground">Người đã chặn</h1>
       </div>
 
       {blockedUsers.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <Ban className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>You haven&apos;t blocked anyone</p>
+            <p>Bạn chưa chặn ai</p>
           </CardContent>
         </Card>
       ) : (
@@ -64,7 +64,7 @@ export default function BlockedPage() {
                   size="sm"
                   onClick={() => handleUnblock(blockedUser.id)}
                 >
-                  Unblock
+                  Bỏ chặn
                 </Button>
               </div>
             ))}

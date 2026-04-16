@@ -55,12 +55,12 @@ function PostCardComponent({ post, author, onDelete, isOwner, animationDelay }: 
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffMins < 1) return 'vừa xong';
+    if (diffMins < 60) return `${diffMins} phút trước`;
+    if (diffHours < 24) return `${diffHours} giờ trước`;
+    if (diffDays < 7) return `${diffDays} ngày trước`;
 
-    return date.toLocaleDateString();
+    return date.toLocaleDateString('vi-VN');
   };
 
   return (
@@ -103,7 +103,7 @@ function PostCardComponent({ post, author, onDelete, isOwner, animationDelay }: 
             <div className="relative w-full h-48 rounded-lg overflow-hidden bg-muted transition-transform hover:scale-[1.02]">
               <Image
                 src={post.image}
-                alt="Post image"
+                alt="Hình ảnh bài viết"
                 fill
                 className="object-cover"
               />
@@ -119,7 +119,7 @@ function PostCardComponent({ post, author, onDelete, isOwner, animationDelay }: 
                 try {
                   await toggleLike();
                 } catch (error) {
-                  console.error('Failed to toggle like:', error);
+                  console.error('Thích thất bại:', error);
                 } finally {
                   setLikeLoading(false);
                 }
@@ -185,7 +185,7 @@ function CommentSection({ postId }: { postId: string }) {
       await addComment(commentText);
       setCommentText('');
     } catch (error) {
-      console.error('Failed to add comment:', error);
+      console.error('Thêm bình luận thất bại:', error);
     } finally {
       setLoading(false);
     }
@@ -201,14 +201,14 @@ function CommentSection({ postId }: { postId: string }) {
         <div className="flex-1 flex gap-2">
           <input
             type="text"
-            placeholder="Write a comment..."
+            placeholder="Viết bình luận..."
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             className="flex-1 text-sm px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200"
             disabled={loading}
           />
           <Button type="submit" size="sm" disabled={!commentText.trim() || loading}>
-            {loading ? 'Posting...' : 'Post'}
+            {loading ? 'Đang...' : 'Gửi'}
           </Button>
         </div>
       </form>
@@ -225,11 +225,11 @@ function CommentSection({ postId }: { postId: string }) {
             </Avatar>
             <div className="flex-1">
               <div className="bg-muted rounded px-3 py-2">
-                <p className="font-semibold text-xs">User</p>
+                <p className="font-semibold text-xs">Người dùng</p>
                 <p className="text-foreground">{comment.content}</p>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {new Date(comment.createdAt).toLocaleDateString()}
+                {new Date(comment.createdAt).toLocaleDateString('vi-VN')}
               </p>
             </div>
           </div>

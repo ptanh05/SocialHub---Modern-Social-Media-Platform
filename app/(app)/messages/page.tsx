@@ -25,7 +25,6 @@ export default function MessagesPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Header */}
       <div
         className={`mb-8 transition-all duration-500 ease-out ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
@@ -35,17 +34,16 @@ export default function MessagesPage() {
           <div className="p-2 rounded-full bg-primary/10">
             <Mail className="w-6 h-6 text-primary" />
           </div>
-          Messages
+          Tin nhắn
         </h1>
         <p className="text-muted-foreground text-sm">
           {conversations.length > 0
-            ? `${conversations.length} ${conversations.length === 1 ? 'conversation' : 'conversations'}`
-            : 'Start a conversation'}
+            ? `${conversations.length} cuộc trò chuyện`
+            : 'Bắt đầu một cuộc trò chuyện'}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Conversations List */}
         <Card
           className={`md:col-span-1 transition-all duration-500 ease-out ${
             visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
@@ -55,16 +53,16 @@ export default function MessagesPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Mail className="w-4 h-4" />
-              Conversations
+              Cuộc trò chuyện
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 max-h-96 overflow-y-auto">
             {isLoading ? (
-              <div className="text-center py-8 text-muted-foreground animate-pulse">Loading...</div>
+              <div className="text-center py-8 text-muted-foreground animate-pulse">Đang tải...</div>
             ) : conversations.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Mail className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                <p className="text-sm">No conversations yet</p>
+                <p className="text-sm">Chưa có cuộc trò chuyện nào</p>
               </div>
             ) : (
               conversations.map((convo, index) => (
@@ -81,7 +79,7 @@ export default function MessagesPage() {
                     <AvatarFallback>U</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">User {convo.userId}</p>
+                    <p className="font-semibold text-sm truncate">Người dùng {convo.userId}</p>
                     <p className="text-xs text-muted-foreground truncate">{convo.lastMessage.content}</p>
                   </div>
                 </Link>
@@ -90,7 +88,6 @@ export default function MessagesPage() {
           </CardContent>
         </Card>
 
-        {/* Chat Area */}
         <div
           className={`md:col-span-2 transition-all duration-500 ease-out ${
             visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
@@ -105,8 +102,8 @@ export default function MessagesPage() {
                 <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
                   <Mail className="w-10 h-10 opacity-30" />
                 </div>
-                <p className="text-base font-medium mb-1">No conversation selected</p>
-                <p className="text-sm">Select a conversation from the list to start messaging</p>
+                <p className="text-base font-medium mb-1">Chưa chọn cuộc trò chuyện</p>
+                <p className="text-sm">Chọn một cuộc trò chuyện từ danh sách để bắt đầu nhắn tin</p>
               </CardContent>
             </Card>
           )}
@@ -136,7 +133,7 @@ function ConversationView({ userId }: { userId: string }) {
       await sendMessage(messageText);
       setMessageText('');
     } catch (error) {
-      console.error('Failed to send message:', error);
+      console.error('Gửi tin nhắn thất bại:', error);
     } finally {
       setSending(false);
     }
@@ -153,13 +150,13 @@ function ConversationView({ userId }: { userId: string }) {
           <Avatar className="h-6 w-6">
             <AvatarFallback className="text-xs">U</AvatarFallback>
           </Avatar>
-          Conversation
+          Cuộc trò chuyện
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
           <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-            Start the conversation by sending a message
+            Bắt đầu cuộc trò chuyện bằng cách gửi tin nhắn
           </div>
         )}
         {messages.map((msg: any, index: number) => (
@@ -189,7 +186,7 @@ function ConversationView({ userId }: { userId: string }) {
       <form onSubmit={handleSend} className="border-t border-border p-4 flex gap-2">
         <Input
           type="text"
-          placeholder="Type a message..."
+          placeholder="Nhập tin nhắn..."
           value={messageText}
           onChange={(e) => setMessageText(e.target.value)}
           disabled={sending}

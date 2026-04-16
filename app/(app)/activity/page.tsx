@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useNotifications } from '@/hooks/use-notifications';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Activity, Bell, Heart, MessageSquare, UserPlus, Mail } from 'lucide-react';
 
 export default function ActivityPage() {
@@ -49,11 +49,11 @@ export default function ActivityPage() {
 
   const getActionText = (type: string) => {
     switch (type) {
-      case 'like': return 'liked your post';
-      case 'comment': return 'commented on your post';
-      case 'follow': return 'started following you';
-      case 'message': return 'sent you a message';
-      default: return 'interacted with you';
+      case 'like': return 'đã thích bài viết của bạn';
+      case 'comment': return 'đã bình luận bài viết của bạn';
+      case 'follow': return 'đã theo dõi bạn';
+      case 'message': return 'đã gửi tin nhắn cho bạn';
+      default: return 'đã tương tác với bạn';
     }
   };
 
@@ -87,7 +87,7 @@ export default function ActivityPage() {
                 </div>
                 <div className="flex-1 text-sm">
                   <p className="text-foreground">
-                    <span className="font-semibold group-hover:text-primary transition-colors duration-200">User</span>{' '}
+                    <span className="font-semibold group-hover:text-primary transition-colors duration-200">Người dùng</span>{' '}
                     {getActionText(item.type)}
                   </p>
                   {item.content && (
@@ -97,7 +97,7 @@ export default function ActivityPage() {
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(item.createdAt).toLocaleDateString()}
+                  {new Date(item.createdAt).toLocaleDateString('vi-VN')}
                 </p>
               </div>
             ))}
@@ -112,7 +112,6 @@ export default function ActivityPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      {/* Header */}
       <div
         className={`flex items-center justify-between mb-8 transition-all duration-500 ease-out ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
@@ -123,11 +122,11 @@ export default function ActivityPage() {
             <Activity className="w-8 h-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Activity</h1>
+            <h1 className="text-3xl font-bold text-foreground">Hoạt động</h1>
             <p className="text-sm text-muted-foreground">
               {totalNotifications === 0
-                ? 'No activity yet'
-                : `${totalNotifications} ${totalNotifications === 1 ? 'event' : 'events'} · ${unreadCount} unread`}
+                ? 'Chưa có hoạt động nào'
+                : `${totalNotifications} hoạt động · ${unreadCount} chưa đọc`}
             </p>
           </div>
         </div>
@@ -143,9 +142,9 @@ export default function ActivityPage() {
             <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
               <Bell className="w-10 h-10 text-muted-foreground/40" />
             </div>
-            <p className="text-lg font-medium text-foreground mb-1">No activity yet</p>
+            <p className="text-lg font-medium text-foreground mb-1">Chưa có hoạt động nào</p>
             <p className="text-sm text-muted-foreground">
-              When someone interacts with your content, it will appear here
+              Khi có người tương tác với nội dung của bạn, thông báo sẽ xuất hiện ở đây
             </p>
           </CardContent>
         </Card>
@@ -157,9 +156,9 @@ export default function ActivityPage() {
           style={{ transitionDelay: '100ms' }}
         >
           <CardContent className="p-6">
-            <ActivitySection title="Today" items={groupedActivity.today} delay={0} />
-            <ActivitySection title="This Week" items={groupedActivity.thisWeek} delay={100} />
-            <ActivitySection title="Older" items={groupedActivity.older} delay={200} />
+            <ActivitySection title="Hôm nay" items={groupedActivity.today} delay={0} />
+            <ActivitySection title="Tuần này" items={groupedActivity.thisWeek} delay={100} />
+            <ActivitySection title="Trước đó" items={groupedActivity.older} delay={200} />
           </CardContent>
         </Card>
       )}

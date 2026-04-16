@@ -70,7 +70,7 @@ export default function ProfilePage() {
         );
       }
     } catch (error) {
-      console.error('Failed to toggle follow:', error);
+      console.error('Theo dõi thất bại:', error);
     } finally {
       setIsFollowLoading(false);
     }
@@ -86,7 +86,6 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      {/* Profile Header */}
       <Card
         className={`mb-6 border-border/40 transition-all duration-500 ease-out hover-lift ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
@@ -111,7 +110,7 @@ export default function ProfilePage() {
                     variant={followStatus?.following ? 'outline' : 'default'}
                     className="transition-all duration-200 active:scale-95"
                   >
-                    {isFollowLoading ? 'Loading...' : followStatus?.following ? 'Following' : 'Follow'}
+                    {isFollowLoading ? 'Đang...' : followStatus?.following ? 'Đã theo dõi' : 'Theo dõi'}
                   </Button>
                 )}
               </div>
@@ -121,15 +120,15 @@ export default function ProfilePage() {
               <div className="flex justify-center sm:justify-start gap-6 mt-4">
                 <div className="text-center">
                   <p className="font-semibold text-foreground">{posts.length}</p>
-                  <p className="text-xs text-muted-foreground">Posts</p>
+                  <p className="text-xs text-muted-foreground">Bài viết</p>
                 </div>
                 <div className="text-center">
                   <p className="font-semibold text-foreground">{profile.followers}</p>
-                  <p className="text-xs text-muted-foreground">Followers</p>
+                  <p className="text-xs text-muted-foreground">Người theo dõi</p>
                 </div>
                 <div className="text-center">
                   <p className="font-semibold text-foreground">{profile.following}</p>
-                  <p className="text-xs text-muted-foreground">Following</p>
+                  <p className="text-xs text-muted-foreground">Đang theo dõi</p>
                 </div>
               </div>
             </div>
@@ -137,7 +136,6 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Posts */}
       <div className="space-y-4">
         <h2
           className={`text-xl font-bold text-foreground transition-all duration-500 ease-out ${
@@ -145,7 +143,7 @@ export default function ProfilePage() {
           }`}
           style={{ transitionDelay: '100ms' }}
         >
-          Posts
+          Bài viết
         </h2>
         {posts.length === 0 ? (
           <div
@@ -155,9 +153,9 @@ export default function ProfilePage() {
             style={{ transitionDelay: '150ms' }}
           >
             <User className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
-            <p className="text-muted-foreground font-medium">No posts yet</p>
+            <p className="text-muted-foreground font-medium">Chưa có bài viết nào</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {isOwnProfile ? 'Share your first post!' : 'This user hasn\'t posted yet.'}
+              {isOwnProfile ? 'Hãy chia sẻ điều gì đó trước tiên!' : 'Người dùng này chưa đăng bài viết nào.'}
             </p>
           </div>
         ) : (

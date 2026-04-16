@@ -35,14 +35,14 @@ export default function AnalyticsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-foreground mb-8">Analytics</h1>
+      <h1 className="text-3xl font-bold text-foreground mb-8">Phân tích</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <FileText className="w-4 h-4" />
-              Total Posts
+              Tổng bài viết
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -54,7 +54,7 @@ export default function AnalyticsPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Heart className="w-4 h-4 text-red-500" />
-              Total Likes
+              Tổng lượt thích
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -66,7 +66,7 @@ export default function AnalyticsPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <MessageCircle className="w-4 h-4 text-blue-500" />
-              Total Comments
+              Tổng bình luận
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -78,7 +78,7 @@ export default function AnalyticsPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Users className="w-4 h-4 text-purple-500" />
-              Followers
+              Người theo dõi
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -89,7 +89,7 @@ export default function AnalyticsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Engagement Over Time</CardTitle>
+          <CardTitle>Tương tác theo thời gian</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
@@ -99,8 +99,8 @@ export default function AnalyticsPage() {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey="likes" fill="#ef4444" />
-              <Bar dataKey="comments" fill="#3b82f6" />
+              <Bar dataKey="likes" fill="#ef4444" name="Lượt thích" />
+              <Bar dataKey="comments" fill="#3b82f6" name="Bình luận" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

@@ -6,15 +6,11 @@ import { useAuth } from '@/hooks/use-auth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
-interface ConversationPageParams {
-  params: { userId: string };
-}
-
-export default function ConversationPage({ params }: ConversationPageParams) {
+export default function ConversationPage({ params }: { params: { userId: string } }) {
   const { messages, sendMessage, isLoading } = useConversation(params.userId);
   const { user } = useAuth();
   const [messageText, setMessageText] = useState('');
@@ -31,7 +27,7 @@ export default function ConversationPage({ params }: ConversationPageParams) {
       await sendMessage(messageText);
       setMessageText('');
     } catch (error) {
-      console.error('Failed to send message:', error);
+      console.error('Gửi tin nhắn thất bại:', error);
     } finally {
       setSending(false);
     }
@@ -41,7 +37,7 @@ export default function ConversationPage({ params }: ConversationPageParams) {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <Link href="/messages" className="flex items-center gap-2 text-primary hover:underline mb-6">
         <ArrowLeft className="w-4 h-4" />
-        Back to messages
+        Quay lại tin nhắn
       </Link>
 
       <Card className="h-96 md:h-screen max-h-[600px] md:max-h-full flex flex-col">
@@ -51,18 +47,18 @@ export default function ConversationPage({ params }: ConversationPageParams) {
               <AvatarFallback>U</AvatarFallback>
             </Avatar>
             <div>
-              <CardTitle>User {params.userId}</CardTitle>
-              <p className="text-xs text-muted-foreground">Active now</p>
+              <CardTitle>Người dùng {params.userId}</CardTitle>
+              <p className="text-xs text-muted-foreground">Đang hoạt động</p>
             </div>
           </div>
         </CardHeader>
 
         <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
           {isLoading ? (
-            <div className="text-center py-12 text-muted-foreground">Loading messages...</div>
+            <div className="text-center py-12 text-muted-foreground">Đang tải tin nhắn...</div>
           ) : messages.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <p>No messages yet. Start the conversation!</p>
+              <p>Chưa có tin nhắn nào. Bắt đầu cuộc trò chuyện!</p>
             </div>
           ) : (
             messages.map((msg: any) => (
@@ -90,14 +86,14 @@ export default function ConversationPage({ params }: ConversationPageParams) {
         <form onSubmit={handleSend} className="border-t border-border p-4 flex gap-2">
           <Input
             type="text"
-            placeholder="Type your message..."
+            placeholder="Nhập tin nhắn..."
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
             disabled={sending}
             className="flex-1"
           />
           <Button type="submit" disabled={!messageText.trim() || sending}>
-            {sending ? 'Sending...' : 'Send'}
+            {sending ? 'Đang gửi...' : 'Gửi'}
           </Button>
         </form>
       </Card>

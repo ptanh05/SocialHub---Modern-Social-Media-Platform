@@ -17,13 +17,13 @@ export function NotificationBell() {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
   const getNotificationText = (notification: any) => {
-    const typeTexts = {
-      like: 'liked your post',
-      comment: 'commented on your post',
-      follow: 'started following you',
-      message: 'sent you a message',
+    const typeTexts: Record<string, string> = {
+      like: 'đã thích bài viết của bạn',
+      comment: 'đã bình luận bài viết của bạn',
+      follow: 'đã theo dõi bạn',
+      message: 'đã gửi tin nhắn cho bạn',
     };
-    return typeTexts[notification.type] || 'interacted with you';
+    return typeTexts[notification.type] || 'đã tương tác với bạn';
   };
 
   return (
@@ -40,17 +40,17 @@ export function NotificationBell() {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80 max-h-96 overflow-y-auto" align="end">
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h3 className="font-semibold">Notifications</h3>
+          <h3 className="font-semibold">Thông báo</h3>
           {unreadCount > 0 && (
             <Button size="sm" variant="ghost" onClick={markAllAsRead} className="text-xs">
-              Mark all as read
+              Đánh dấu đã đọc tất cả
             </Button>
           )}
         </div>
 
         {notifications.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">
-            <p>No notifications yet</p>
+            <p>Chưa có thông báo nào</p>
           </div>
         ) : (
           notifications.map((notification) => (
@@ -64,13 +64,13 @@ export function NotificationBell() {
               </Avatar>
               <div className="flex-1 text-sm">
                 <p className="text-foreground">
-                  <span className="font-semibold">User</span> {getNotificationText(notification)}
+                  <span className="font-semibold">Người dùng</span> {getNotificationText(notification)}
                 </p>
                 {notification.content && (
                   <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{notification.content}</p>
                 )}
                 <p className="text-muted-foreground text-xs mt-1">
-                  {new Date(notification.createdAt).toLocaleDateString()}
+                  {new Date(notification.createdAt).toLocaleDateString('vi-VN')}
                 </p>
               </div>
               {!notification.read && <div className="w-2 h-2 bg-primary rounded-full mt-2" />}

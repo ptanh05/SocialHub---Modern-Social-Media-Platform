@@ -63,14 +63,14 @@ export default function SettingsPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to update profile');
+        throw new Error(data.error || 'Cập nhật thất bại');
       }
 
-      setSuccess('Profile updated successfully!');
+      setSuccess('Cập nhật hồ sơ thành công!');
       await refreshUser();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update profile');
+      setError(err instanceof Error ? err.message : 'Cập nhật hồ sơ thất bại');
     } finally {
       setLoading(false);
     }
@@ -85,8 +85,8 @@ export default function SettingsPage() {
       } else if (newTheme === 'light') {
         document.documentElement.classList.remove('dark');
       }
-    } catch (err) {
-      setError('Failed to update theme');
+    } catch {
+      setError('Cập nhật giao diện thất bại');
     }
   };
 
@@ -98,15 +98,15 @@ export default function SettingsPage() {
         follows: notifyFollows,
         messages: notifyMessages,
       });
-      setSuccess('Notification settings updated!');
+      setSuccess('Cập nhật thông báo thành công!');
       setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      setError('Failed to update notification settings');
+    } catch {
+      setError('Cập nhật thông báo thất bại');
     }
   };
 
   const handleLogout = async () => {
-    if (confirm('Are you sure you want to log out?')) {
+    if (confirm('Bạn có chắc muốn đăng xuất?')) {
       await logout();
       router.push('/login');
     }
@@ -114,7 +114,6 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      {/* Header */}
       <div
         className={`mb-8 transition-all duration-500 ease-out ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
@@ -124,12 +123,11 @@ export default function SettingsPage() {
           <div className="p-2 rounded-full bg-primary/10">
             <Settings className="w-6 h-6 text-primary" />
           </div>
-          Settings
+          Cài đặt
         </h1>
-        <p className="text-muted-foreground text-sm">Manage your account and preferences</p>
+        <p className="text-muted-foreground text-sm">Quản lý tài khoản và tùy chọn của bạn</p>
       </div>
 
-      {/* Profile Settings */}
       <Card
         className={`mb-6 border-border/40 transition-all duration-500 ease-out hover-lift ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
@@ -137,8 +135,8 @@ export default function SettingsPage() {
         style={{ transitionDelay: '50ms' }}
       >
         <CardHeader>
-          <CardTitle>Profile Settings</CardTitle>
-          <CardDescription>Update your profile information</CardDescription>
+          <CardTitle>Cài đặt hồ sơ</CardTitle>
+          <CardDescription>Cập nhật thông tin cá nhân của bạn</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleUpdateProfile} className="space-y-4">
@@ -157,7 +155,7 @@ export default function SettingsPage() {
             )}
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Name</label>
+              <label className="text-sm font-medium text-foreground">Tên</label>
               <Input
                 type="text"
                 value={name}
@@ -168,14 +166,14 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Bio</label>
+              <label className="text-sm font-medium text-foreground">Tiểu sử</label>
               <textarea
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 maxLength={150}
                 disabled={loading}
                 className="w-full min-h-20 p-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none transition-all duration-200"
-                placeholder="Tell us about yourself (max 150 characters)"
+                placeholder="Giới thiệu về bản thân bạn (tối đa 150 ký tự)"
               />
               <p className={`text-xs transition-colors duration-200 ${bio.length > 130 ? 'text-destructive' : 'text-muted-foreground'}`}>
                 {bio.length}/150
@@ -190,7 +188,7 @@ export default function SettingsPage() {
                 disabled
                 className="bg-muted text-muted-foreground cursor-not-allowed"
               />
-              <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+              <p className="text-xs text-muted-foreground">Email không thể thay đổi</p>
             </div>
 
             <Button
@@ -201,15 +199,14 @@ export default function SettingsPage() {
               {loading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Saving...
+                  Đang lưu...
                 </span>
-              ) : 'Save Changes'}
+              ) : 'Lưu thay đổi'}
             </Button>
           </form>
         </CardContent>
       </Card>
 
-      {/* Appearance Settings */}
       <Card
         className={`mb-6 border-border/40 transition-all duration-500 ease-out hover-lift ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
@@ -219,32 +216,31 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sun className="w-4 h-4" />
-            Appearance
+            Giao diện
           </CardTitle>
-          <CardDescription>Customize how the app looks</CardDescription>
+          <CardDescription>Tùy chỉnh giao diện hiển thị của ứng dụng</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Theme</label>
+            <label className="text-sm font-medium text-foreground">Chủ đề</label>
             <Select value={theme} onValueChange={handleThemeChange}>
               <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/50">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="light" className="flex items-center gap-2">
-                  <Sun className="w-4 h-4" /> Light
+                  <Sun className="w-4 h-4" /> Sáng
                 </SelectItem>
                 <SelectItem value="dark" className="flex items-center gap-2">
-                  <Moon className="w-4 h-4" /> Dark
+                  <Moon className="w-4 h-4" /> Tối
                 </SelectItem>
-                <SelectItem value="system">System</SelectItem>
+                <SelectItem value="system">Hệ thống</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Notification Settings */}
       <Card
         className={`mb-6 border-border/40 transition-all duration-500 ease-out hover-lift ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
@@ -254,9 +250,9 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bell className="w-4 h-4" />
-            Notifications
+            Thông báo
           </CardTitle>
-          <CardDescription>Choose what notifications you receive</CardDescription>
+          <CardDescription>Chọn loại thông báo bạn muốn nhận</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
@@ -275,10 +271,10 @@ export default function SettingsPage() {
 
           <div className="space-y-3">
             {[
-              { checked: notifyLikes, setChecked: setNotifyLikes, label: 'Notify when someone likes your post' },
-              { checked: notifyComments, setChecked: setNotifyComments, label: 'Notify when someone comments on your post' },
-              { checked: notifyFollows, setChecked: setNotifyFollows, label: 'Notify when someone follows you' },
-              { checked: notifyMessages, setChecked: setNotifyMessages, label: 'Notify when you receive a message' },
+              { checked: notifyLikes, setChecked: setNotifyLikes, label: 'Thông báo khi có người thích bài viết của bạn' },
+              { checked: notifyComments, setChecked: setNotifyComments, label: 'Thông báo khi có người bình luận bài viết của bạn' },
+              { checked: notifyFollows, setChecked: setNotifyFollows, label: 'Thông báo khi có người theo dõi bạn' },
+              { checked: notifyMessages, setChecked: setNotifyMessages, label: 'Thông báo khi có tin nhắn mới' },
             ].map((item, index) => (
               <label
                 key={index}
@@ -305,14 +301,13 @@ export default function SettingsPage() {
             {loading ? (
               <span className="flex items-center gap-2">
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Saving...
+                Đang lưu...
               </span>
-            ) : 'Save Notification Settings'}
+            ) : 'Lưu cài đặt thông báo'}
           </Button>
         </CardContent>
       </Card>
 
-      {/* Account Settings */}
       <Card
         className={`border-border/40 transition-all duration-500 ease-out hover-lift ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
@@ -322,9 +317,9 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <LogOut className="w-4 h-4" />
-            Account
+            Tài khoản
           </CardTitle>
-          <CardDescription>Manage your account</CardDescription>
+          <CardDescription>Quản lý tài khoản của bạn</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Button
@@ -332,7 +327,7 @@ export default function SettingsPage() {
             onClick={handleLogout}
             className="w-full transition-all duration-200 active:scale-95"
           >
-            Log Out
+            Đăng xuất
           </Button>
         </CardContent>
       </Card>

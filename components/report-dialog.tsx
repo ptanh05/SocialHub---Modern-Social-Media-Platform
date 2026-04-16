@@ -19,21 +19,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-interface ReportDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  postId?: string;
-  userId?: string;
-  onSubmit: (reason: string, description: string) => Promise<void>;
-}
-
 const REPORT_REASONS = [
   { value: 'spam', label: 'Spam' },
-  { value: 'harassment', label: 'Harassment' },
-  { value: 'abuse', label: 'Abuse' },
-  { value: 'inappropriate', label: 'Inappropriate Content' },
-  { value: 'misinformation', label: 'Misinformation' },
-  { value: 'other', label: 'Other' },
+  { value: 'harassment', label: 'Quấy rối' },
+  { value: 'abuse', label: 'Lạm dụng' },
+  { value: 'inappropriate', label: 'Nội dung không phù hợp' },
+  { value: 'misinformation', label: 'Thông tin sai lệch' },
+  { value: 'other', label: 'Khác' },
 ];
 
 export function ReportDialog({
@@ -42,7 +34,13 @@ export function ReportDialog({
   postId,
   userId,
   onSubmit,
-}: ReportDialogProps) {
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  postId?: string;
+  userId?: string;
+  onSubmit: (reason: string, description: string) => Promise<void>;
+}) {
   const [reason, setReason] = useState('');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -57,7 +55,7 @@ export function ReportDialog({
       setDescription('');
       onOpenChange(false);
     } catch (error) {
-      console.error('Failed to submit report:', error);
+      console.error('Gửi báo cáo thất bại:', error);
     } finally {
       setSubmitting(false);
     }
@@ -67,18 +65,18 @@ export function ReportDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Report {postId ? 'Post' : 'User'}</DialogTitle>
+          <DialogTitle>Báo cáo {postId ? 'bài viết' : 'người dùng'}</DialogTitle>
           <DialogDescription>
-            Help us understand what&apos;s wrong. Your report will be reviewed by our team.
+            Giúp chúng tôi hiểu vấn đề. Báo cáo của bạn sẽ được đội ngũ kiểm duyệt xem xét.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div>
-            <label className="text-sm font-medium mb-2 block">Reason</label>
+            <label className="text-sm font-medium mb-2 block">Lý do</label>
             <Select value={reason} onValueChange={setReason}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a reason" />
+                <SelectValue placeholder="Chọn lý do" />
               </SelectTrigger>
               <SelectContent>
                 {REPORT_REASONS.map((r) => (
@@ -91,9 +89,9 @@ export function ReportDialog({
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-2 block">Description</label>
+            <label className="text-sm font-medium mb-2 block">Mô tả</label>
             <Textarea
-              placeholder="Please provide more details about your report..."
+              placeholder="Vui lòng cung cấp thêm chi tiết về báo cáo của bạn..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={1000}
@@ -111,13 +109,13 @@ export function ReportDialog({
             onClick={() => onOpenChange(false)}
             disabled={submitting}
           >
-            Cancel
+            Hủy
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={!reason || !description.trim() || submitting}
           >
-            {submitting ? 'Submitting...' : 'Submit Report'}
+            {submitting ? 'Đang gửi...' : 'Gửi báo cáo'}
           </Button>
         </DialogFooter>
       </DialogContent>

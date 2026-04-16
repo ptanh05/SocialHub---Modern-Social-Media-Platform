@@ -21,19 +21,17 @@ interface Post {
   updatedAt: string;
 }
 
-interface PostEditModalProps {
-  post: Post;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (content: string, image?: string) => Promise<void>;
-}
-
 export function PostEditModal({
   post,
   open,
   onOpenChange,
   onSave,
-}: PostEditModalProps) {
+}: {
+  post: Post;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (content: string, image?: string) => Promise<void>;
+}) {
   const [content, setContent] = useState(post.content);
   const [saving, setSaving] = useState(false);
 
@@ -45,7 +43,7 @@ export function PostEditModal({
       await onSave(content, post.image);
       onOpenChange(false);
     } catch (error) {
-      console.error('Failed to save post:', error);
+      console.error('Lưu bài viết thất bại:', error);
     } finally {
       setSaving(false);
     }
@@ -55,15 +53,15 @@ export function PostEditModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Post</DialogTitle>
+          <DialogTitle>Chỉnh sửa bài viết</DialogTitle>
           <DialogDescription>
-            Update your post content. Posted on {new Date(post.createdAt).toLocaleDateString()}
+            Cập nhật nội dung bài viết. Đã đăng ngày {new Date(post.createdAt).toLocaleDateString('vi-VN')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <Textarea
-            placeholder="What's on your mind?"
+            placeholder="Bạn đang nghĩ gì?"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             maxLength={5000}
@@ -80,13 +78,13 @@ export function PostEditModal({
             onClick={() => onOpenChange(false)}
             disabled={saving}
           >
-            Cancel
+            Hủy
           </Button>
           <Button
             onClick={handleSave}
             disabled={!content.trim() || saving || content === post.content}
           >
-            {saving ? 'Saving...' : 'Save Changes'}
+            {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
           </Button>
         </DialogFooter>
       </DialogContent>
