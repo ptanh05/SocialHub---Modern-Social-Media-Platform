@@ -27,6 +27,9 @@ async function getDb() {
   return globalThis.__db;
 }
 
+// Exported for use in API routes that need raw SQL access (e.g., search)
+export { getDb };
+
 function initSchema(db: Awaited<ReturnType<typeof openDb>>) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -189,6 +192,14 @@ export async function getUserByUsername(username: string): Promise<User | undefi
   const db = await getDb();
   const r = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
   return row<User>(r);
+}
+
+export async function searchUsers(query: string): Promise<User[]> {
+  const db = await getDb();
+  const likePattern = `%${query}%`;
+  return (db.prepare(
+    'SELECT * FROM users WHERE username LIKE ? OR name LIKE ? LIMIT 10',
+  ).all(likePattern, likePattern) as unknown[]).map(row<User>);
 }
 
 export async function createUser(
