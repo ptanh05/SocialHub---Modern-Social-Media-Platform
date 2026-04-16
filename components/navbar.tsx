@@ -11,6 +11,14 @@ import { Home, Compass, Settings, LogOut, Search, Mail, Menu, X, BadgeCheck } fr
 import { NotificationBell } from '@/components/notification-bell';
 import { SearchBar } from '@/components/search-bar';
 
+function getBadgeEmoji(badge: string) {
+  const map: Record<string, string> = {
+    creator: '✨', early_adopter: '🚀', contributor: '🏆',
+    verified: '✅', staff: '💼',
+  };
+  return map[badge] || '';
+}
+
 export function Navbar() {
   const { user, logout } = useAuth();
   const router = useRouter();
@@ -124,7 +132,11 @@ export function Navbar() {
                         <AvatarImage src={user.avatar} alt={user.name} />
                         <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                       </Avatar>
-                      <span>Trang cá nhân</span>
+                      <span className="flex items-center gap-1">
+                        {user.name}
+                        {user.isVerified && <BadgeCheck className="w-3 h-3 text-blue-500" />}
+                        {user.badge && <span className="text-xs">{getBadgeEmoji(user.badge)}</span>}
+                      </span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

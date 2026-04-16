@@ -9,6 +9,7 @@ import {
   isUserBlocked,
   createNotification,
   getUserPreferences,
+  pushSSEEvent,
 } from '@/lib/db';
 import { sendEmail, notifyNewFollowerEmail } from '@/lib/email';
 
