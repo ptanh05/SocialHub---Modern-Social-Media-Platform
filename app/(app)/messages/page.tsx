@@ -1,50 +1,83 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useConversations } from '@/hooks/use-messages';
 import { useAuth } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { Mail } from 'lucide-react';
+import { Mail, Send } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function MessagesPage() {
   const { conversations, isLoading } = useConversations();
   const { user } = useAuth();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   if (!user) return null;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-foreground mb-8">Messages</h1>
+      {/* Header */}
+      <div
+        className={`mb-8 transition-all duration-500 ease-out ${
+          visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+      >
+        <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
+          <div className="p-2 rounded-full bg-primary/10">
+            <Mail className="w-6 h-6 text-primary" />
+          </div>
+          Messages
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          {conversations.length > 0
+            ? `${conversations.length} ${conversations.length === 1 ? 'conversation' : 'conversations'}`
+            : 'Start a conversation'}
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Conversations List */}
-        <Card className="md:col-span-1">
+        <Card
+          className={`md:col-span-1 transition-all duration-500 ease-out ${
+            visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+          style={{ transitionDelay: '100ms' }}
+        >
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="w-5 h-5" />
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Mail className="w-4 h-4" />
               Conversations
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 max-h-96 overflow-y-auto">
             {isLoading ? (
-              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+              <div className="text-center py-8 text-muted-foreground animate-pulse">Loading...</div>
             ) : conversations.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">No conversations yet</div>
+              <div className="text-center py-8 text-muted-foreground">
+                <Mail className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                <p className="text-sm">No conversations yet</p>
+              </div>
             ) : (
-              conversations.map((convo) => (
+              conversations.map((convo, index) => (
                 <Link
                   key={convo.userId}
                   href={`/messages/${convo.userId}`}
-                  className={`flex items-center gap-3 p-3 rounded-lg border border-border/40 cursor-pointer hover:bg-muted transition ${
-                    selectedUserId === convo.userId ? 'bg-muted' : ''
+                  onClick={() => setSelectedUserId(convo.userId)}
+                  className={`flex items-center gap-3 p-3 rounded-lg border border-border/40 cursor-pointer transition-all duration-200 animate-fade-in-up hover:bg-muted hover:border-primary/30 hover-lift ${
+                    selectedUserId === convo.userId ? 'bg-muted border-primary/30' : ''
                   }`}
+                  style={{ animationDelay: `${150 + index * 50}ms` }}
                 >
-                  <Avatar className="h-10 w-10">
+                  <Avatar className="h-10 w-10 transition-transform hover:scale-105">
                     <AvatarFallback>U</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
@@ -58,16 +91,22 @@ export default function MessagesPage() {
         </Card>
 
         {/* Chat Area */}
-        <div className="md:col-span-2">
+        <div
+          className={`md:col-span-2 transition-all duration-500 ease-out ${
+            visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+          style={{ transitionDelay: '200ms' }}
+        >
           {selectedUserId ? (
             <ConversationView userId={selectedUserId} />
           ) : (
-            <Card>
-              <CardContent className="flex items-center justify-center h-96 text-muted-foreground">
-                <div className="text-center">
-                  <Mail className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Select a conversation to start messaging</p>
+            <Card className="min-h-96">
+              <CardContent className="flex flex-col items-center justify-center h-96 text-muted-foreground">
+                <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <Mail className="w-10 h-10 opacity-30" />
                 </div>
+                <p className="text-base font-medium mb-1">No conversation selected</p>
+                <p className="text-sm">Select a conversation from the list to start messaging</p>
               </CardContent>
             </Card>
           )}
@@ -81,6 +120,12 @@ function ConversationView({ userId }: { userId: string }) {
   const { messages, sendMessage } = require('@/hooks/use-messages').useConversation(userId);
   const [messageText, setMessageText] = useState('');
   const [sending, setSending] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,22 +143,40 @@ function ConversationView({ userId }: { userId: string }) {
   };
 
   return (
-    <Card className="flex flex-col h-96">
-      <CardHeader className="border-b border-border">
-        <CardTitle className="text-lg">Conversation</CardTitle>
+    <Card
+      className={`flex flex-col h-96 transition-all duration-300 ${
+        visible ? 'opacity-100 scale-100' : 'opacity-0 scale-98'
+      }`}
+    >
+      <CardHeader className="border-b border-border pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Avatar className="h-6 w-6">
+            <AvatarFallback className="text-xs">U</AvatarFallback>
+          </Avatar>
+          Conversation
+        </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.map((msg: any) => (
-          <div key={msg.id} className={`flex ${msg.senderId === userId ? 'justify-start' : 'justify-end'}`}>
+        {messages.length === 0 && (
+          <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+            Start the conversation by sending a message
+          </div>
+        )}
+        {messages.map((msg: any, index: number) => (
+          <div
+            key={msg.id}
+            className={`flex ${msg.senderId === userId ? 'justify-start' : 'justify-end'} animate-fade-in`}
+            style={{ animationDelay: `${index * 30}ms` }}
+          >
             <div
-              className={`max-w-xs px-4 py-2 rounded-lg ${
+              className={`max-w-xs px-4 py-2 rounded-xl transition-all duration-200 ${
                 msg.senderId === userId
-                  ? 'bg-muted text-muted-foreground'
-                  : 'bg-primary text-primary-foreground'
+                  ? 'bg-muted text-foreground rounded-bl-sm'
+                  : 'bg-primary text-primary-foreground rounded-br-sm'
               }`}
             >
               <p className="text-sm">{msg.content}</p>
-              <p className="text-xs opacity-70 mt-1">
+              <p className="text-xs opacity-60 mt-1">
                 {new Date(msg.createdAt).toLocaleTimeString([], {
                   hour: '2-digit',
                   minute: '2-digit',
@@ -130,10 +193,14 @@ function ConversationView({ userId }: { userId: string }) {
           value={messageText}
           onChange={(e) => setMessageText(e.target.value)}
           disabled={sending}
-          className="flex-1"
+          className="flex-1 transition-all duration-200 focus:ring-2 focus:ring-primary/50"
         />
-        <Button type="submit" disabled={!messageText.trim() || sending}>
-          {sending ? 'Sending...' : 'Send'}
+        <Button
+          type="submit"
+          disabled={!messageText.trim() || sending}
+          className="transition-all duration-200 active:scale-95"
+        >
+          <Send className="w-4 h-4" />
         </Button>
       </form>
     </Card>

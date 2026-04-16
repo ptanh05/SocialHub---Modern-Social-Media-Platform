@@ -1,15 +1,16 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { useUserPosts } from '@/hooks/use-posts';
 import useSWR from 'swr';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PostCard } from '@/components/post-card';
 import { Spinner } from '@/components/ui/spinner';
-import { useState } from 'react';
+import { User } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -38,6 +39,12 @@ export default function ProfilePage() {
     fetcher
   );
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   const isOwnProfile = currentUser?.username === username;
 
@@ -52,7 +59,6 @@ export default function ProfilePage() {
       });
 
       if (response.ok) {
-        // Update follow status
         mutateProfile(
           {
             ...profile,
@@ -81,15 +87,19 @@ export default function ProfilePage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       {/* Profile Header */}
-      <Card className="mb-6 border-border/40">
+      <Card
+        className={`mb-6 border-border/40 transition-all duration-500 ease-out hover-lift ${
+          visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+      >
         <CardContent className="pt-6">
-          <div className="flex gap-4">
-            <Avatar className="h-24 w-24">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Avatar className="h-24 w-24 mx-auto sm:mx-0 transition-transform hover:scale-105">
               <AvatarImage src={profile.avatar} alt={profile.name} />
               <AvatarFallback>{profile.name.charAt(0)}</AvatarFallback>
             </Avatar>
-            <div className="flex-1">
-              <div className="flex items-start justify-between">
+            <div className="flex-1 text-center sm:text-left">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-3">
                 <div>
                   <h1 className="text-2xl font-bold text-foreground">{profile.name}</h1>
                   <p className="text-muted-foreground">@{profile.username}</p>
@@ -99,24 +109,25 @@ export default function ProfilePage() {
                     onClick={handleFollowToggle}
                     disabled={isFollowLoading}
                     variant={followStatus?.following ? 'outline' : 'default'}
+                    className="transition-all duration-200 active:scale-95"
                   >
-                    {followStatus?.following ? 'Following' : 'Follow'}
+                    {isFollowLoading ? 'Loading...' : followStatus?.following ? 'Following' : 'Follow'}
                   </Button>
                 )}
               </div>
               {profile.bio && (
-                <p className="mt-2 text-foreground text-sm">{profile.bio}</p>
+                <p className="mt-3 text-foreground text-sm">{profile.bio}</p>
               )}
-              <div className="flex gap-6 mt-4">
-                <div>
+              <div className="flex justify-center sm:justify-start gap-6 mt-4">
+                <div className="text-center">
                   <p className="font-semibold text-foreground">{posts.length}</p>
                   <p className="text-xs text-muted-foreground">Posts</p>
                 </div>
-                <div>
+                <div className="text-center">
                   <p className="font-semibold text-foreground">{profile.followers}</p>
                   <p className="text-xs text-muted-foreground">Followers</p>
                 </div>
-                <div>
+                <div className="text-center">
                   <p className="font-semibold text-foreground">{profile.following}</p>
                   <p className="text-xs text-muted-foreground">Following</p>
                 </div>
@@ -128,11 +139,29 @@ export default function ProfilePage() {
 
       {/* Posts */}
       <div className="space-y-4">
-        <h2 className="text-xl font-bold text-foreground">Posts</h2>
+        <h2
+          className={`text-xl font-bold text-foreground transition-all duration-500 ease-out ${
+            visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+          style={{ transitionDelay: '100ms' }}
+        >
+          Posts
+        </h2>
         {posts.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">No posts yet</p>
+          <div
+            className={`text-center py-12 transition-all duration-500 ease-out ${
+              visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }`}
+            style={{ transitionDelay: '150ms' }}
+          >
+            <User className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
+            <p className="text-muted-foreground font-medium">No posts yet</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {isOwnProfile ? 'Share your first post!' : 'This user hasn\'t posted yet.'}
+            </p>
+          </div>
         ) : (
-          posts.map((post: any) => (
+          posts.map((post: any, index: number) => (
             <PostCard
               key={post.id}
               post={post}
@@ -142,6 +171,7 @@ export default function ProfilePage() {
                 avatar: profile.avatar,
               }}
               isOwner={isOwnProfile}
+              animationDelay={150 + index * 80}
             />
           ))
         )}

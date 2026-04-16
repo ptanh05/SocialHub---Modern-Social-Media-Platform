@@ -10,8 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('demo@example.com');
-  const [password, setPassword] = useState('demo123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -91,7 +91,6 @@ export default function LoginPage() {
                   )}
                 </button>
               </div>
-              <p className="text-xs text-muted-foreground">Demo: demo@example.com / demo123</p>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
