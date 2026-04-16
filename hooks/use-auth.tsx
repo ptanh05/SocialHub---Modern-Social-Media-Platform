@@ -27,9 +27,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch current user on mount
+  // Poll for token validity every 5 minutes and refresh if expired
   useEffect(() => {
-    refreshUser();
+    const interval = setInterval(async () => {
+      const response = await fetch('/api/auth/me');
+      if (response.status === 401) {
+        // Token expired — clear user state
+        setUser(null);
+      } else if (response.ok) {
+        const data = await response.json();
+        setUser(data);
+      }
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const refreshUser = async () => {

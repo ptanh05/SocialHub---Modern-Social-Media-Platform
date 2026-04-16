@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import { getPostById, addLike, removeLike, isPostLikedByUser, getLikeCount } from '@/lib/db';
+import {
+  getPostById,
+  addLike,
+  removeLike,
+  isPostLikedByUser,
+  getLikeCount,
+  createNotification,
+  getUserPreferences,
+} from '@/lib/db';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -8,7 +16,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const post = await getPostById(id);
 
     if (!post) {
-      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Bài viết không tìm thấy' }, { status: 404 });
     }
 
     const likeCount = await getLikeCount(id);
@@ -24,9 +32,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ likeCount, liked });
   } catch (error) {
-    console.error('Failed to fetch likes:', error);
+    console.error('Lỗi khi lấy lượt thích:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch likes' },
+      { error: 'Lỗi khi lấy lượt thích' },
       { status: 500 }
     );
   }
@@ -36,26 +44,25 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     const token = request.cookies.get('auth_token')?.value;
     if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Không có quyền truy cập' }, { status: 401 });
     }
 
     const payload = verifyToken(token);
     if (!payload) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+      return NextResponse.json({ error: 'Token không hợp lệ' }, { status: 401 });
     }
 
     const { id } = await params;
     const post = await getPostById(id);
 
     if (!post) {
-      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Bài viết không tìm thấy' }, { status: 404 });
     }
 
-    // Check if already liked
     const alreadyLiked = await isPostLikedByUser(payload.userId, id);
     if (alreadyLiked) {
       return NextResponse.json(
-        { error: 'Already liked' },
+        { error: 'Đã thích bài viết này' },
         { status: 400 }
       );
     }
@@ -63,11 +70,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     await addLike(payload.userId, id);
     const likeCount = await getLikeCount(id);
 
+    // Tạo thông báo cho chủ bài viết (không thông báo chính mình)
+    if (post.userId !== payload.userId) {
+      const prefs = await getUserPreferences(post.userId);
+      if (prefs?.notificationSettings.likes !== false) {
+        await createNotification(post.userId, 'like', payload.userId, id);
+      }
+    }
+
     return NextResponse.json({ likeCount });
   } catch (error) {
-    console.error('Failed to like post:', error);
+    console.error('Lỗi khi thích bài viết:', error);
     return NextResponse.json(
-      { error: 'Failed to like post' },
+      { error: 'Lỗi khi thích bài viết' },
       { status: 500 }
     );
   }
@@ -77,26 +92,25 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   try {
     const token = request.cookies.get('auth_token')?.value;
     if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Không có quyền truy cập' }, { status: 401 });
     }
 
     const payload = verifyToken(token);
     if (!payload) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+      return NextResponse.json({ error: 'Token không hợp lệ' }, { status: 401 });
     }
 
     const { id } = await params;
     const post = await getPostById(id);
 
     if (!post) {
-      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Bài viết không tìm thấy' }, { status: 404 });
     }
 
-    // Check if liked
     const isLiked = await isPostLikedByUser(payload.userId, id);
     if (!isLiked) {
       return NextResponse.json(
-        { error: 'Not liked' },
+        { error: 'Chưa thích bài viết này' },
         { status: 400 }
       );
     }
@@ -106,9 +120,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     return NextResponse.json({ likeCount });
   } catch (error) {
-    console.error('Failed to unlike post:', error);
+    console.error('Lỗi khi bỏ thích bài viết:', error);
     return NextResponse.json(
-      { error: 'Failed to unlike post' },
+      { error: 'Lỗi khi bỏ thích bài viết' },
       { status: 500 }
     );
   }

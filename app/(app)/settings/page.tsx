@@ -199,7 +199,7 @@ export default function SettingsPage() {
 
   const handleThemeChange = async (newTheme: string) => {
     try {
-      setTheme(newTheme);
+      setTheme(newTheme as 'light' | 'dark' | 'system');
       await updateTheme(newTheme as 'light' | 'dark' | 'system');
       if (newTheme === 'dark') {
         document.documentElement.classList.add('dark');

@@ -1,29 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import { getUserByUsername, addFollow, removeFollow, isFollowing } from '@/lib/db';
+import {
+  getUserByUsername,
+  addFollow,
+  removeFollow,
+  isFollowing,
+  isUserBlocked,
+  createNotification,
+  getUserPreferences,
+} from '@/lib/db';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ username: string }> }) {
   try {
     const token = request.cookies.get('auth_token')?.value;
     if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Không có quyền truy cập' }, { status: 401 });
     }
 
     const payload = verifyToken(token);
     if (!payload) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+      return NextResponse.json({ error: 'Token không hợp lệ' }, { status: 401 });
     }
 
     const { username } = await params;
     const targetUser = await getUserByUsername(username);
 
     if (!targetUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Người dùng không tìm thấy' }, { status: 404 });
     }
 
     if (targetUser.id === payload.userId) {
       return NextResponse.json(
-        { error: 'Cannot follow yourself' },
+        { error: 'Không thể theo dõi chính mình' },
+        { status: 400 }
+      );
+    }
+
+    // Kiểm tra người dùng hiện tại có bị block bởi người được follow không
+    const blockedByTarget = await isUserBlocked(targetUser.id, payload.userId);
+    if (blockedByTarget) {
+      return NextResponse.json(
+        { error: 'Không thể theo dõi người dùng này' },
+        { status: 403 }
+      );
+    }
+
+    // Kiểm tra người dùng hiện tại có block người được follow không
+    const blockedTarget = await isUserBlocked(payload.userId, targetUser.id);
+    if (blockedTarget) {
+      return NextResponse.json(
+        { error: 'Bạn đã chặn người dùng này. Hãy bỏ chặn trước.' },
         { status: 400 }
       );
     }
@@ -31,18 +57,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const following = await isFollowing(payload.userId, targetUser.id);
     if (following) {
       return NextResponse.json(
-        { error: 'Already following' },
+        { error: 'Đã theo dõi người dùng này' },
         { status: 400 }
       );
     }
 
     await addFollow(payload.userId, targetUser.id);
 
-    return NextResponse.json({ success: true });
+    // Tạo thông báo follow cho người được follow
+    const prefs = await getUserPreferences(targetUser.id);
+    if (prefs?.notificationSettings.follows !== false) {
+      await createNotification(targetUser.id, 'follow', payload.userId);
+    }
+
+    return NextResponse.json({ success: true, message: 'Đã theo dõi người dùng' });
   } catch (error) {
-    console.error('Failed to follow user:', error);
+    console.error('Lỗi khi theo dõi người dùng:', error);
     return NextResponse.json(
-      { error: 'Failed to follow user' },
+      { error: 'Lỗi khi theo dõi người dùng' },
       { status: 500 }
     );
   }
@@ -52,36 +84,36 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   try {
     const token = request.cookies.get('auth_token')?.value;
     if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Không có quyền truy cập' }, { status: 401 });
     }
 
     const payload = verifyToken(token);
     if (!payload) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+      return NextResponse.json({ error: 'Token không hợp lệ' }, { status: 401 });
     }
 
     const { username } = await params;
     const targetUser = await getUserByUsername(username);
 
     if (!targetUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Người dùng không tìm thấy' }, { status: 404 });
     }
 
     const following = await isFollowing(payload.userId, targetUser.id);
     if (!following) {
       return NextResponse.json(
-        { error: 'Not following' },
+        { error: 'Chưa theo dõi người dùng này' },
         { status: 400 }
       );
     }
 
     await removeFollow(payload.userId, targetUser.id);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: 'Đã hủy theo dõi' });
   } catch (error) {
-    console.error('Failed to unfollow user:', error);
+    console.error('Lỗi khi hủy theo dõi người dùng:', error);
     return NextResponse.json(
-      { error: 'Failed to unfollow user' },
+      { error: 'Lỗi khi hủy theo dõi người dùng' },
       { status: 500 }
     );
   }
@@ -94,7 +126,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const targetUser = await getUserByUsername(username);
 
     if (!targetUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Người dùng không tìm thấy' }, { status: 404 });
     }
 
     let isUserFollowing = false;
@@ -107,9 +139,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ following: isUserFollowing });
   } catch (error) {
-    console.error('Failed to check follow status:', error);
+    console.error('Lỗi khi kiểm tra trạng thái theo dõi:', error);
     return NextResponse.json(
-      { error: 'Failed to check follow status' },
+      { error: 'Lỗi khi kiểm tra trạng thái theo dõi' },
       { status: 500 }
     );
   }

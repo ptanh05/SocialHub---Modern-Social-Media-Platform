@@ -144,6 +144,14 @@ CREATE TABLE IF NOT EXISTS user_preferences (
   notif_messages        BOOLEAN NOT NULL DEFAULT TRUE,
   updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS reposts (
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  post_id     INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, post_id)
+);
 `;
 
 let schemaInitialized = false;
@@ -217,6 +225,7 @@ export async function createUser(
     VALUES (${email}, ${username}, ${password}, ${name}, ${avatar})
     RETURNING *
   `;
+  await db`INSERT INTO user_preferences (user_id) VALUES (${result[0].id})`;
   return row<User>(result[0])!;
 }
 
@@ -225,22 +234,21 @@ export async function updateUser(
   fields: { name?: string; bio?: string; theme?: string; avatar?: string; password?: string },
 ): Promise<User | undefined> {
   await initSchema();
-  if (!fields.name && !fields.bio && !fields.theme && !fields.avatar && !fields.password) return getUserById(id);
 
-  // Build SET clause dynamically — column names are controlled by the keys above,
-  // values are already validated as strings by the caller.
   const sets: string[] = [];
-  const vals: string[] = [];
-  if (fields.name !== undefined)  { sets.push('name = $' + (vals.length + 1)); vals.push(fields.name); }
-  if (fields.bio !== undefined)   { sets.push('bio = $' + (vals.length + 1)); vals.push(fields.bio); }
-  if (fields.theme !== undefined) { sets.push('theme = $' + (vals.length + 1)); vals.push(fields.theme); }
-  if (fields.avatar !== undefined) { sets.push('avatar = $' + (vals.length + 1)); vals.push(fields.avatar); }
-  if (fields.password !== undefined) { sets.push('password = $' + (vals.length + 1)); vals.push(fields.password); }
-  vals.push(id);
+  const vals: (string | undefined)[] = [];
+  if (fields.name !== undefined)     { sets.push('name'); vals.push(fields.name); }
+  if (fields.bio !== undefined)    { sets.push('bio'); vals.push(fields.bio); }
+  if (fields.theme !== undefined)   { sets.push('theme'); vals.push(fields.theme); }
+  if (fields.avatar !== undefined) { sets.push('avatar'); vals.push(fields.avatar); }
+  if (fields.password !== undefined) { sets.push('password'); vals.push(fields.password); }
+
+  if (sets.length === 0) return getUserById(id);
 
   const db = getDb();
-  const setClause = sets.join(', ');
-  await db.query(`UPDATE users SET ${setClause} WHERE id = $${vals.length}`, vals);
+  const setPairs = sets.map((col, i) => `${col} = $${i + 1}`);
+  vals.push(id);
+  await db.query(`UPDATE users SET ${setPairs.join(', ')} WHERE id = $${vals.length}`, vals);
   return getUserById(id);
 }
 
@@ -381,6 +389,13 @@ export async function getCommentCount(postId: string): Promise<number> {
   const db = getDb();
   const result = await db`SELECT COUNT(*) as c FROM comments WHERE post_id = ${postId}`;
   return Number(result[0]?.c ?? 0);
+}
+
+export async function getCommentById(commentId: string): Promise<Comment | undefined> {
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT * FROM comments WHERE id = ${commentId}`;
+  return row<Comment>(result[0] ?? null);
 }
 
 export async function deleteComment(commentId: string): Promise<boolean> {
@@ -811,9 +826,9 @@ export async function updateUserPreferences(
   }
 
   const sets: string[] = ['updated_at = NOW()'];
-  const vals: unknown[] = [];
-  if (preferences.theme !== undefined)             { sets.push('theme = $' + (vals.length + 1)); vals.push(preferences.theme); }
-  if (preferences.emailNotifications !== undefined)  { sets.push('email_notifications = $' + (vals.length + 1)); vals.push(preferences.emailNotifications); }
+  const vals: (string | boolean | undefined)[] = [];
+  if (preferences.theme !== undefined)              { sets.push('theme = $' + (vals.length + 1)); vals.push(preferences.theme); }
+  if (preferences.emailNotifications !== undefined) { sets.push('email_notifications = $' + (vals.length + 1)); vals.push(preferences.emailNotifications); }
   if (preferences.notificationSettings) {
     sets.push('notif_likes = $' + (vals.length + 1));     vals.push(preferences.notificationSettings.likes);
     sets.push('notif_comments = $' + (vals.length + 1)); vals.push(preferences.notificationSettings.comments);
@@ -821,7 +836,58 @@ export async function updateUserPreferences(
     sets.push('notif_messages = $' + (vals.length + 1)); vals.push(preferences.notificationSettings.messages);
   }
   vals.push(userId);
-  const setClause = sets.join(', ');
-  await db.query(`UPDATE user_preferences SET ${setClause} WHERE user_id = $${vals.length}`, vals);
+  await db.query(`UPDATE user_preferences SET ${sets.join(', ')} WHERE user_id = $${vals.length}`, vals);
   return (await getUserPreferences(userId))!;
+}
+
+// ─── Repost ────────────────────────────────────────────────────────────────
+
+export interface Repost {
+  id: string;
+  userId: string;
+  postId: string;
+  createdAt: string;
+}
+
+export async function addRepost(userId: string, postId: string): Promise<Repost | undefined> {
+  await initSchema();
+  const db = getDb();
+  try {
+    const result = await db`
+      INSERT INTO reposts (user_id, post_id)
+      VALUES (${userId}, ${postId})
+      RETURNING *
+    `;
+    return row<Repost>(result[0]);
+  } catch {
+    return undefined;
+  }
+}
+
+export async function removeRepost(userId: string, postId: string): Promise<boolean> {
+  await initSchema();
+  const db = getDb();
+  const result = await db`DELETE FROM reposts WHERE user_id = ${userId} AND post_id = ${postId}`;
+  return (result.rowCount ?? 0) > 0;
+}
+
+export async function isPostRepostedByUser(userId: string, postId: string): Promise<boolean> {
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT 1 FROM reposts WHERE user_id = ${userId} AND post_id = ${postId}`;
+  return result.length > 0;
+}
+
+export async function getRepostCount(postId: string): Promise<number> {
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT COUNT(*) as c FROM reposts WHERE post_id = ${postId}`;
+  return Number(result[0]?.c ?? 0);
+}
+
+export async function getRepostsByUserId(userId: string): Promise<Repost[]> {
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT * FROM reposts WHERE user_id = ${userId} ORDER BY created_at DESC`;
+  return rows<Repost>(result);
 }

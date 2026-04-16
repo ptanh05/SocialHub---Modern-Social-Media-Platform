@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { usePosts } from '@/hooks/use-posts';
+import { useMentions } from '@/hooks/use-mentions';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { MentionDropdown } from '@/components/mention-dropdown';
 import { ImageIcon, X } from 'lucide-react';
 import Image from 'next/image';
 
@@ -18,6 +20,27 @@ export function CreatePost({ onPostCreated }: { onPostCreated?: () => void }) {
   const [error, setError] = useState('');
   const [visible, setVisible] = useState(false);
   const [charCount, setCharCount] = useState(0);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleMention = (username: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const { selectionStart } = textarea;
+    const textBefore = textarea.value.substring(0, selectionStart);
+    const lastAt = textBefore.lastIndexOf('@');
+    const textAfter = textarea.value.substring(selectionStart);
+    const newValue = textBefore.substring(0, lastAt) + `@${username} ` + textAfter;
+    setContent(newValue);
+    setCharCount(newValue.length);
+    // Restore cursor after inserted text
+    const newCursor = lastAt + username.length + 2;
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(newCursor, newCursor);
+    }, 0);
+  };
+
+  const mentions = useMentions({ onMention: handleMention });
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 50);
@@ -85,15 +108,23 @@ export function CreatePost({ onPostCreated }: { onPostCreated?: () => void }) {
 
           <div className="relative">
             <textarea
+              ref={textareaRef}
               placeholder="Bạn đang nghĩ gì?"
               value={content}
               onChange={(e) => {
                 setContent(e.target.value);
                 setCharCount(e.target.value.length);
+                mentions.handleInputChange(e.target.value);
               }}
-              className="w-full min-h-24 p-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200 resize-none"
+              onKeyDown={(e) => mentions.handleKeyDown(e, content)}
+              className="w-full min-h-24 p-3 pr-16 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200 resize-none"
               disabled={loading}
               maxLength={500}
+            />
+            <MentionDropdown
+              suggestions={mentions.suggestions}
+              selectedIndex={mentions.selectedIndex}
+              onSelect={mentions.selectMention}
             />
             <p
               className={`absolute bottom-2 right-3 text-xs transition-colors duration-200 ${

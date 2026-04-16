@@ -1,13 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { useLikes, useComments } from '@/hooks/use-interactions';
-import { Heart, MessageCircle, Share2, Trash2 } from 'lucide-react';
+import { useReposts } from '@/hooks/use-reposts';
+import { useMentions } from '@/hooks/use-mentions';
+import { useBookmarkStatus } from '@/hooks/use-bookmarks';
+import { MentionDropdown } from '@/components/mention-dropdown';
+import { Heart, MessageCircle, Share2, Trash2, Repeat2, Bookmark } from 'lucide-react';
 import Image from 'next/image';
 
 interface Post {
@@ -38,8 +42,11 @@ export function PostCard({ post, author, onDelete, isOwner, animationDelay = 0 }
 function PostCardComponent({ post, author, onDelete, isOwner, animationDelay }: PostCardProps) {
   const { likeCount, liked, toggleLike } = useLikes(post.id);
   const { comments } = useComments(post.id);
+  const { repostCount, reposted, toggleRepost } = useReposts(post.id);
+  const { bookmarked, toggleBookmark } = useBookmarkStatus(post.id);
   const [showComments, setShowComments] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -145,6 +152,36 @@ function PostCardComponent({ post, author, onDelete, isOwner, animationDelay }: 
             <Button
               variant="ghost"
               size="sm"
+              onClick={async () => {
+                setBookmarkLoading(true);
+                try {
+                  await toggleBookmark();
+                } catch (error) {
+                  console.error('Lưu bài viết thất bại:', error);
+                } finally {
+                  setBookmarkLoading(false);
+                }
+              }}
+              disabled={bookmarkLoading}
+              className={`text-muted-foreground transition-all duration-200 hover:text-primary ${bookmarked ? 'text-primary' : ''}`}
+            >
+              <Bookmark
+                className={`w-4 h-4 transition-transform duration-200 ${bookmarked ? 'animate-fade-in-scale' : 'hover:scale-110'}`}
+                fill={bookmarked ? 'currentColor' : 'none'}
+              />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleRepost}
+              className={`transition-all duration-200 ${reposted ? 'text-green-500' : 'text-muted-foreground hover:text-green-400'}`}
+            >
+              <Repeat2 className="w-4 h-4" />
+              <span className="ml-2 text-xs">{repostCount}</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               className="text-muted-foreground hover:text-primary transition-colors"
             >
               <Share2 className="w-4 h-4" />
@@ -166,15 +203,61 @@ function PostCardComponent({ post, author, onDelete, isOwner, animationDelay }: 
 
 function CommentSection({ postId }: { postId: string }) {
   const { user } = useAuth();
-  const { comments, addComment } = useComments(postId);
+  const { comments, addComment, mutate } = useComments(postId);
   const [commentText, setCommentText] = useState('');
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const commentInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 50);
     return () => clearTimeout(timer);
   }, []);
+
+  const handleMention = (username: string) => {
+    const input = commentInputRef.current;
+    if (!input) return;
+    const { selectionStart } = input;
+    const textBefore = input.value.substring(0, selectionStart);
+    const lastAt = textBefore.lastIndexOf('@');
+    const textAfter = input.value.substring(selectionStart);
+    const newValue = textBefore.substring(0, lastAt) + `@${username} ` + textAfter;
+    setCommentText(newValue);
+    const newCursor = lastAt + username.length + 2;
+    setTimeout(() => {
+      input.focus();
+      input.setSelectionRange(newCursor, newCursor);
+    }, 0);
+  };
+
+  const mentions = useMentions({ onMention: handleMention });
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm('Bạn có chắc muốn xóa bình luận này?')) return;
+
+    setDeletingId(commentId);
+    try {
+      const response = await fetch(`/api/comments/${commentId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Xóa bình luận thất bại');
+      }
+
+      await mutate(
+        (current: any[] | undefined) =>
+          (current || []).filter((c: any) => c.id !== commentId),
+        false
+      );
+    } catch (error) {
+      console.error('Xóa bình luận thất bại:', error);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -198,14 +281,24 @@ function CommentSection({ postId }: { postId: string }) {
           <AvatarImage src={user?.avatar} alt={user?.name} />
           <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
         </Avatar>
-        <div className="flex-1 flex gap-2">
-          <input
-            type="text"
+        <div className="flex-1 relative">
+          <textarea
+            ref={commentInputRef}
             placeholder="Viết bình luận..."
             value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            className="flex-1 text-sm px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200"
+            onChange={(e) => {
+              setCommentText(e.target.value);
+              mentions.handleInputChange(e.target.value);
+            }}
+            onKeyDown={(e) => mentions.handleKeyDown(e, commentText)}
+            className="flex-1 text-sm px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200 resize-none w-full min-h-10"
             disabled={loading}
+            rows={1}
+          />
+          <MentionDropdown
+            suggestions={mentions.suggestions}
+            selectedIndex={mentions.selectedIndex}
+            onSelect={mentions.selectMention}
           />
           <Button type="submit" size="sm" disabled={!commentText.trim() || loading}>
             {loading ? 'Đang...' : 'Gửi'}
@@ -214,26 +307,44 @@ function CommentSection({ postId }: { postId: string }) {
       </form>
 
       <div className="space-y-2">
-        {comments.map((comment: any, index: number) => (
-          <div
-            key={comment.id}
-            className={`flex gap-2 text-sm transition-all duration-300 animate-fade-in`}
-            style={{ animationDelay: `${index * 50}ms` }}
-          >
-            <Avatar className="h-6 w-6">
-              <AvatarFallback>U</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <div className="bg-muted rounded px-3 py-2">
-                <p className="font-semibold text-xs">Người dùng</p>
-                <p className="text-foreground">{comment.content}</p>
+        {comments.map((comment: any, index: number) => {
+          const isOwner = user?.id === comment.userId;
+          return (
+            <div
+              key={comment.id}
+              className={`flex gap-2 text-sm transition-all duration-300 animate-fade-in group`}
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <Avatar className="h-6 w-6">
+                <AvatarFallback className="text-xs">
+                  {comment.author?.name?.charAt(0) || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <div className="bg-muted rounded px-3 py-2">
+                  <p className="font-semibold text-xs text-foreground">
+                    {comment.author?.name || 'Người dùng'}
+                  </p>
+                  <p className="text-foreground">{comment.content}</p>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(comment.createdAt).toLocaleDateString('vi-VN')}
+                  </p>
+                  {isOwner && (
+                    <button
+                      onClick={() => handleDeleteComment(comment.id)}
+                      disabled={deletingId === comment.id}
+                      className="text-xs text-destructive/60 hover:text-destructive transition-colors disabled:opacity-50"
+                    >
+                      {deletingId === comment.id ? 'Đang xóa...' : 'Xóa'}
+                    </button>
+                  )}
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {new Date(comment.createdAt).toLocaleDateString('vi-VN')}
-              </p>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

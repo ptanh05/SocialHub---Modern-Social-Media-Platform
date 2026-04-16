@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import { getUserPreferences, updateUserPreferences } from '@/lib/db';
+import { getUserPreferences, updateUserPreferences, type UserPreferences } from '@/lib/db';
 import { z } from 'zod';
 
 const preferencesSchema = z.object({
@@ -52,7 +52,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const updates = preferencesSchema.parse(body);
 
-    const preferences = await updateUserPreferences(payload.userId, updates);
+    const preferences = await updateUserPreferences(payload.userId, updates as Partial<UserPreferences>);
 
     return NextResponse.json(preferences);
   } catch (error) {

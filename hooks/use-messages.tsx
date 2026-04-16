@@ -15,15 +15,13 @@ interface Conversation {
   lastMessage: Message;
 }
 
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
 export function useConversations() {
   const { data, error, mutate } = useSWR<{
     conversations: Conversation[];
     unreadCount: number;
-  }>('/api/messages', async (url) => {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Failed to fetch conversations');
-    return res.json();
-  });
+  }>('/api/messages', fetcher);
 
   const sendMessage = useCallback(
     async (receiverId: string, content: string) => {

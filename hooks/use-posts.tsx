@@ -1,7 +1,6 @@
 'use client';
 
-import useSWR from 'swr';
-import { infinite as useSWRInfinite } from 'swr/infinite';
+import useSWRInfinite from 'swr/infinite';
 
 interface Post {
   id: string;
