@@ -1,165 +1,163 @@
-// Server-only database layer using better-sqlite3.
+// Server-only database layer using Neon PostgreSQL.
 // Must NOT be imported from client components — use the API routes instead.
 
-import path from 'path';
+import { neon } from '@neondatabase/serverless';
 
-// Lazy dynamic import so this file is never bundled into the client.
-async function openDb() {
-  const { default: Database } = await import('better-sqlite3');
-  const DB_PATH = path.join(process.cwd(), 'socialhub.db');
-  const db = new Database(DB_PATH);
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
-  initSchema(db);
-  return db;
-}
-
-// Global singleton — survives Next.js hot-module-reload in dev.
-declare global {
-  // eslint-disable-next-line no-var
-  var __db: Awaited<ReturnType<typeof openDb>> | undefined;
-}
-
-async function getDb() {
-  if (!globalThis.__db) {
-    globalThis.__db = await openDb();
+function getDb() {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL environment variable is not set');
   }
-  return globalThis.__db;
-}
-
-// Exported for use in API routes that need raw SQL access (e.g., search)
-export { getDb };
-
-function initSchema(db: Awaited<ReturnType<typeof openDb>>) {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      email       TEXT    UNIQUE NOT NULL,
-      username    TEXT    UNIQUE NOT NULL,
-      password    TEXT    NOT NULL,
-      name        TEXT    NOT NULL DEFAULT '',
-      bio         TEXT    NOT NULL DEFAULT '',
-      avatar      TEXT    NOT NULL DEFAULT '',
-      theme       TEXT    NOT NULL DEFAULT 'system',
-      created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS posts (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      content     TEXT    NOT NULL,
-      image       TEXT,
-      created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
-      updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS likes (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      post_id     INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-      created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
-      UNIQUE(user_id, post_id)
-    );
-
-    CREATE TABLE IF NOT EXISTS comments (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      post_id     INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-      content     TEXT    NOT NULL,
-      created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS follows (
-      id           INTEGER PRIMARY KEY AUTOINCREMENT,
-      follower_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      following_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      created_at   TEXT    NOT NULL DEFAULT (datetime('now')),
-      UNIQUE(follower_id, following_id)
-    );
-
-    CREATE TABLE IF NOT EXISTS bookmarks (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      post_id     INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-      created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
-      UNIQUE(user_id, post_id)
-    );
-
-    CREATE TABLE IF NOT EXISTS notifications (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      type        TEXT    NOT NULL,
-      actor_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      post_id     INTEGER REFERENCES posts(id) ON DELETE SET NULL,
-      content     TEXT,
-      read        INTEGER NOT NULL DEFAULT 0,
-      created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS messages (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      sender_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      receiver_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      content     TEXT    NOT NULL,
-      read        INTEGER NOT NULL DEFAULT 0,
-      created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS blocks (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      blocker_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      blocked_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
-      UNIQUE(blocker_id, blocked_id)
-    );
-
-    CREATE TABLE IF NOT EXISTS reports (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      reporter_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      post_id     INTEGER REFERENCES posts(id) ON DELETE SET NULL,
-      user_id     INTEGER REFERENCES users(id) ON DELETE SET NULL,
-      reason      TEXT    NOT NULL,
-      description TEXT    NOT NULL,
-      status      TEXT    NOT NULL DEFAULT 'pending',
-      created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS hashtags (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      tag         TEXT    UNIQUE NOT NULL,
-      count       INTEGER NOT NULL DEFAULT 0,
-      last_used   TEXT    NOT NULL DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS user_preferences (
-      user_id               INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-      theme                 TEXT    NOT NULL DEFAULT 'system',
-      email_notifications    INTEGER NOT NULL DEFAULT 1,
-      notif_likes           INTEGER NOT NULL DEFAULT 1,
-      notif_comments        INTEGER NOT NULL DEFAULT 1,
-      notif_follows         INTEGER NOT NULL DEFAULT 1,
-      notif_messages        INTEGER NOT NULL DEFAULT 1,
-      updated_at            TEXT    NOT NULL DEFAULT (datetime('now'))
-    );
-  `);
+  return neon(databaseUrl);
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function row<T>(raw: any): T {
-  if (!raw) return undefined as T;
+function row<T>(raw: Record<string, unknown> | null): T | undefined {
+  if (!raw) return undefined;
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(raw)) {
     if (k === 'read' || k.startsWith('notif_') || k === 'email_notifications') {
       out[k] = Boolean(v);
-    } else if (typeof v === 'number' && (k.endsWith('_id') || k === 'count')) {
+    } else if (typeof v === 'number' && (k.endsWith('_id') || k === 'id' || k === 'count')) {
       out[k] = String(v);
     } else {
       out[k] = v;
     }
   }
   return out as T;
+}
+
+function rows<T>(raw: Record<string, unknown>[]): T[] {
+  return raw.map(row<T>);
+}
+
+// ─── Schema Init ────────────────────────────────────────────────────────────
+
+const SCHEMA = `
+CREATE TABLE IF NOT EXISTS users (
+  id          SERIAL PRIMARY KEY,
+  email       TEXT    UNIQUE NOT NULL,
+  username    TEXT    UNIQUE NOT NULL,
+  password    TEXT    NOT NULL,
+  name        TEXT    NOT NULL DEFAULT '',
+  bio         TEXT    NOT NULL DEFAULT '',
+  avatar      TEXT    NOT NULL DEFAULT '',
+  theme       TEXT    NOT NULL DEFAULT 'system',
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS posts (
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  content     TEXT    NOT NULL,
+  image       TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS likes (
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  post_id     INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, post_id)
+);
+
+CREATE TABLE IF NOT EXISTS comments (
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  post_id     INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  content     TEXT    NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS follows (
+  id           SERIAL PRIMARY KEY,
+  follower_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  following_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(follower_id, following_id)
+);
+
+CREATE TABLE IF NOT EXISTS bookmarks (
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  post_id     INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, post_id)
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type        TEXT    NOT NULL,
+  actor_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  post_id     INTEGER REFERENCES posts(id) ON DELETE SET NULL,
+  content     TEXT,
+  read        BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+  id          SERIAL PRIMARY KEY,
+  sender_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  receiver_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  content     TEXT    NOT NULL,
+  read        BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS blocks (
+  id          SERIAL PRIMARY KEY,
+  blocker_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  blocked_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(blocker_id, blocked_id)
+);
+
+CREATE TABLE IF NOT EXISTS reports (
+  id          SERIAL PRIMARY KEY,
+  reporter_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  post_id     INTEGER REFERENCES posts(id) ON DELETE SET NULL,
+  user_id     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  reason      TEXT    NOT NULL,
+  description TEXT    NOT NULL,
+  status      TEXT    NOT NULL DEFAULT 'pending',
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS hashtags (
+  id          SERIAL PRIMARY KEY,
+  tag         TEXT    UNIQUE NOT NULL,
+  count       INTEGER NOT NULL DEFAULT 0,
+  last_used   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS user_preferences (
+  user_id               INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  theme                 TEXT    NOT NULL DEFAULT 'system',
+  email_notifications    BOOLEAN NOT NULL DEFAULT TRUE,
+  notif_likes           BOOLEAN NOT NULL DEFAULT TRUE,
+  notif_comments        BOOLEAN NOT NULL DEFAULT TRUE,
+  notif_follows         BOOLEAN NOT NULL DEFAULT TRUE,
+  notif_messages        BOOLEAN NOT NULL DEFAULT TRUE,
+  updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+`;
+
+let schemaInitialized = false;
+async function initSchema() {
+  if (schemaInitialized) return;
+  const db = getDb();
+  // Neon batch-queries: split by semicolon and run separately
+  const statements = SCHEMA.split(';')
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+  for (const stmt of statements) {
+    await db`${stmt}`; // eslint-disable-line @typescript-eslint/no-explicit-any
+  }
+  schemaInitialized = true;
 }
 
 // ─── User ─────────────────────────────────────────────────────────────────
@@ -177,29 +175,32 @@ export interface User {
 }
 
 export async function getUserById(id: string): Promise<User | undefined> {
-  const db = await getDb();
-  const r = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
-  return row<User>(r);
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT * FROM users WHERE id = ${id}`;
+  return row<User>(result[0] ?? null);
 }
 
 export async function getUserByEmail(email: string): Promise<User | undefined> {
-  const db = await getDb();
-  const r = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-  return row<User>(r);
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT * FROM users WHERE email = ${email}`;
+  return row<User>(result[0] ?? null);
 }
 
 export async function getUserByUsername(username: string): Promise<User | undefined> {
-  const db = await getDb();
-  const r = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
-  return row<User>(r);
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT * FROM users WHERE username = ${username}`;
+  return row<User>(result[0] ?? null);
 }
 
 export async function searchUsers(query: string): Promise<User[]> {
-  const db = await getDb();
+  await initSchema();
+  const db = getDb();
   const likePattern = `%${query}%`;
-  return (db.prepare(
-    'SELECT * FROM users WHERE username LIKE ? OR name LIKE ? LIMIT 10',
-  ).all(likePattern, likePattern) as unknown[]).map(row<User>);
+  const result = await db`SELECT * FROM users WHERE username LIKE ${likePattern} OR name LIKE ${likePattern} LIMIT 10`;
+  return rows<User>(result);
 }
 
 export async function createUser(
@@ -208,29 +209,33 @@ export async function createUser(
   password: string,
   name: string,
 ): Promise<User> {
-  const db = await getDb();
+  await initSchema();
+  const db = getDb();
   const avatar = `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(username)}`;
-  const id = String(
-    db.prepare(
-      'INSERT INTO users (email, username, password, name, avatar) VALUES (?, ?, ?, ?, ?)',
-    ).run(email, username, password, name, avatar).lastInsertRowid,
-  );
-  return (await getUserById(id))!;
+  const result = await db`
+    INSERT INTO users (email, username, password, name, avatar)
+    VALUES (${email}, ${username}, ${password}, ${name}, ${avatar})
+    RETURNING *
+  `;
+  return row<User>(result[0])!;
 }
 
 export async function updateUser(
   id: string,
   fields: { name?: string; bio?: string; theme?: string },
 ): Promise<User | undefined> {
-  const db = await getDb();
+  await initSchema();
+  const db = getDb();
+  if (!fields.name && !fields.bio && !fields.theme) return getUserById(id);
+
   const sets: string[] = [];
-  const vals: unknown[] = [];
-  if (fields.name !== undefined)  { sets.push('name = ?');  vals.push(fields.name); }
-  if (fields.bio !== undefined)   { sets.push('bio = ?');   vals.push(fields.bio); }
-  if (fields.theme !== undefined) { sets.push('theme = ?'); vals.push(fields.theme); }
-  if (!sets.length) return getUserById(id);
+  const vals: (string | undefined)[] = [];
+  if (fields.name !== undefined)  { sets.push('name = $' + (vals.length + 1)); vals.push(fields.name); }
+  if (fields.bio !== undefined)   { sets.push('bio = $' + (vals.length + 1)); vals.push(fields.bio); }
+  if (fields.theme !== undefined) { sets.push('theme = $' + (vals.length + 1)); vals.push(fields.theme); }
   vals.push(id);
-  db.prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`).run(...vals);
+
+  await db`UPDATE users SET ${db.raw(sets.join(', '))} WHERE id = ${id}`;
   return getUserById(id);
 }
 
@@ -246,43 +251,51 @@ export interface Post {
 }
 
 export async function getPostById(id: string): Promise<Post | undefined> {
-  const db = await getDb();
-  return row<Post>(db.prepare('SELECT * FROM posts WHERE id = ?').get(id));
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT * FROM posts WHERE id = ${id}`;
+  return row<Post>(result[0] ?? null);
 }
 
 export async function getAllPosts(): Promise<Post[]> {
-  const db = await getDb();
-  return (db.prepare('SELECT * FROM posts ORDER BY created_at DESC').all() as unknown[]).map(row<Post>);
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT * FROM posts ORDER BY created_at DESC`;
+  return rows<Post>(result);
 }
 
 export async function getPostsByUserId(userId: string): Promise<Post[]> {
-  const db = await getDb();
-  return (db.prepare('SELECT * FROM posts WHERE user_id = ? ORDER BY created_at DESC').all(userId) as unknown[]).map(row<Post>);
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT * FROM posts WHERE user_id = ${userId} ORDER BY created_at DESC`;
+  return rows<Post>(result);
 }
 
 export async function createPost(userId: string, content: string, image?: string): Promise<Post> {
-  const db = await getDb();
-  const id = String(
-    db.prepare('INSERT INTO posts (user_id, content, image) VALUES (?, ?, ?)').run(userId, content, image ?? null).lastInsertRowid,
-  );
+  await initSchema();
+  const db = getDb();
+  const result = await db`
+    INSERT INTO posts (user_id, content, image)
+    VALUES (${userId}, ${content}, ${image ?? null})
+    RETURNING *
+  `;
   void extractHashtags(content);
-  return (await getPostById(id))!;
+  return row<Post>(result[0])!;
 }
 
 export async function updatePost(postId: string, content: string, image?: string): Promise<Post | undefined> {
-  const db = await getDb();
-  const sets = ['content = ?', 'updated_at = datetime("now")'];
-  const vals: unknown[] = [content];
-  if (image) { sets.push('image = ?'); vals.push(image); }
-  vals.push(postId);
-  db.prepare(`UPDATE posts SET ${sets.join(', ')} WHERE id = ?`).run(...vals);
+  await initSchema();
+  const db = getDb();
+  await db`UPDATE posts SET content = ${content}, updated_at = NOW()${image ? db`, image = ${image}` : db``} WHERE id = ${postId}`;
   void extractHashtags(content);
   return getPostById(postId);
 }
 
 export async function deletePost(postId: string): Promise<boolean> {
-  const db = await getDb();
-  return db.prepare('DELETE FROM posts WHERE id = ?').run(postId).changes > 0;
+  await initSchema();
+  const db = getDb();
+  const result = await db`DELETE FROM posts WHERE id = ${postId}`;
+  return (result.rowCount ?? 0) > 0;
 }
 
 // ─── Like ─────────────────────────────────────────────────────────────────
@@ -295,31 +308,39 @@ export interface Like {
 }
 
 export async function addLike(userId: string, postId: string): Promise<Like | undefined> {
-  const db = await getDb();
+  await initSchema();
+  const db = getDb();
   try {
-    const id = String(
-      db.prepare('INSERT INTO likes (user_id, post_id) VALUES (?, ?)').run(userId, postId).lastInsertRowid,
-    );
-    return row<Like>(db.prepare('SELECT * FROM likes WHERE id = ?').get(id));
+    const result = await db`
+      INSERT INTO likes (user_id, post_id)
+      VALUES (${userId}, ${postId})
+      RETURNING *
+    `;
+    return row<Like>(result[0]);
   } catch {
     return undefined;
   }
 }
 
 export async function removeLike(userId: string, postId: string): Promise<boolean> {
-  const db = await getDb();
-  return db.prepare('DELETE FROM likes WHERE user_id = ? AND post_id = ?').run(userId, postId).changes > 0;
+  await initSchema();
+  const db = getDb();
+  const result = await db`DELETE FROM likes WHERE user_id = ${userId} AND post_id = ${postId}`;
+  return (result.rowCount ?? 0) > 0;
 }
 
 export async function getLikeCount(postId: string): Promise<number> {
-  const db = await getDb();
-  const r = db.prepare('SELECT COUNT(*) as c FROM likes WHERE post_id = ?').get(postId) as { c: number };
-  return r.c;
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT COUNT(*) as c FROM likes WHERE post_id = ${postId}`;
+  return Number(result[0]?.c ?? 0);
 }
 
 export async function isPostLikedByUser(userId: string, postId: string): Promise<boolean> {
-  const db = await getDb();
-  return !!db.prepare('SELECT 1 FROM likes WHERE user_id = ? AND post_id = ?').get(userId, postId);
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT 1 FROM likes WHERE user_id = ${userId} AND post_id = ${postId}`;
+  return result.length > 0;
 }
 
 // ─── Comment ──────────────────────────────────────────────────────────────
@@ -333,27 +354,35 @@ export interface Comment {
 }
 
 export async function addComment(userId: string, postId: string, content: string): Promise<Comment> {
-  const db = await getDb();
-  const id = String(
-    db.prepare('INSERT INTO comments (user_id, post_id, content) VALUES (?, ?, ?)').run(userId, postId, content).lastInsertRowid,
-  );
-  return row<Comment>(db.prepare('SELECT * FROM comments WHERE id = ?').get(id))!;
+  await initSchema();
+  const db = getDb();
+  const result = await db`
+    INSERT INTO comments (user_id, post_id, content)
+    VALUES (${userId}, ${postId}, ${content})
+    RETURNING *
+  `;
+  return row<Comment>(result[0])!;
 }
 
 export async function getCommentsByPostId(postId: string): Promise<Comment[]> {
-  const db = await getDb();
-  return (db.prepare('SELECT * FROM comments WHERE post_id = ? ORDER BY created_at ASC').all(postId) as unknown[]).map(row<Comment>);
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT * FROM comments WHERE post_id = ${postId} ORDER BY created_at ASC`;
+  return rows<Comment>(result);
 }
 
 export async function getCommentCount(postId: string): Promise<number> {
-  const db = await getDb();
-  const r = db.prepare('SELECT COUNT(*) as c FROM comments WHERE post_id = ?').get(postId) as { c: number };
-  return r.c;
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT COUNT(*) as c FROM comments WHERE post_id = ${postId}`;
+  return Number(result[0]?.c ?? 0);
 }
 
 export async function deleteComment(commentId: string): Promise<boolean> {
-  const db = await getDb();
-  return db.prepare('DELETE FROM comments WHERE id = ?').run(commentId).changes > 0;
+  await initSchema();
+  const db = getDb();
+  const result = await db`DELETE FROM comments WHERE id = ${commentId}`;
+  return (result.rowCount ?? 0) > 0;
 }
 
 // ─── Follow ────────────────────────────────────────────────────────────────
@@ -366,37 +395,46 @@ export interface Follow {
 }
 
 export async function addFollow(followerId: string, followingId: string): Promise<Follow | undefined> {
-  const db = await getDb();
+  await initSchema();
+  const db = getDb();
   try {
-    const id = String(
-      db.prepare('INSERT INTO follows (follower_id, following_id) VALUES (?, ?)').run(followerId, followingId).lastInsertRowid,
-    );
-    return row<Follow>(db.prepare('SELECT * FROM follows WHERE id = ?').get(id));
+    const result = await db`
+      INSERT INTO follows (follower_id, following_id)
+      VALUES (${followerId}, ${followingId})
+      RETURNING *
+    `;
+    return row<Follow>(result[0]);
   } catch {
     return undefined;
   }
 }
 
 export async function removeFollow(followerId: string, followingId: string): Promise<boolean> {
-  const db = await getDb();
-  return db.prepare('DELETE FROM follows WHERE follower_id = ? AND following_id = ?').run(followerId, followingId).changes > 0;
+  await initSchema();
+  const db = getDb();
+  const result = await db`DELETE FROM follows WHERE follower_id = ${followerId} AND following_id = ${followingId}`;
+  return (result.rowCount ?? 0) > 0;
 }
 
 export async function isFollowing(followerId: string, followingId: string): Promise<boolean> {
-  const db = await getDb();
-  return !!db.prepare('SELECT 1 FROM follows WHERE follower_id = ? AND following_id = ?').get(followerId, followingId);
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT 1 FROM follows WHERE follower_id = ${followerId} AND following_id = ${followingId}`;
+  return result.length > 0;
 }
 
 export async function getFollowerCount(userId: string): Promise<number> {
-  const db = await getDb();
-  const r = db.prepare('SELECT COUNT(*) as c FROM follows WHERE following_id = ?').get(userId) as { c: number };
-  return r.c;
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT COUNT(*) as c FROM follows WHERE following_id = ${userId}`;
+  return Number(result[0]?.c ?? 0);
 }
 
 export async function getFollowingCount(userId: string): Promise<number> {
-  const db = await getDb();
-  const r = db.prepare('SELECT COUNT(*) as c FROM follows WHERE follower_id = ?').get(userId) as { c: number };
-  return r.c;
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT COUNT(*) as c FROM follows WHERE follower_id = ${userId}`;
+  return Number(result[0]?.c ?? 0);
 }
 
 // ─── Bookmark ─────────────────────────────────────────────────────────────
@@ -409,32 +447,42 @@ export interface Bookmark {
 }
 
 export async function addBookmark(userId: string, postId: string): Promise<Bookmark | undefined> {
-  const db = await getDb();
+  await initSchema();
+  const db = getDb();
   try {
-    const id = String(
-      db.prepare('INSERT INTO bookmarks (user_id, post_id) VALUES (?, ?)').run(userId, postId).lastInsertRowid,
-    );
-    return row<Bookmark>(db.prepare('SELECT * FROM bookmarks WHERE id = ?').get(id));
+    const result = await db`
+      INSERT INTO bookmarks (user_id, post_id)
+      VALUES (${userId}, ${postId})
+      RETURNING *
+    `;
+    return row<Bookmark>(result[0]);
   } catch {
     return undefined;
   }
 }
 
 export async function removeBookmark(userId: string, postId: string): Promise<boolean> {
-  const db = await getDb();
-  return db.prepare('DELETE FROM bookmarks WHERE user_id = ? AND post_id = ?').run(userId, postId).changes > 0;
+  await initSchema();
+  const db = getDb();
+  const result = await db`DELETE FROM bookmarks WHERE user_id = ${userId} AND post_id = ${postId}`;
+  return (result.rowCount ?? 0) > 0;
 }
 
 export async function isPostBookmarked(userId: string, postId: string): Promise<boolean> {
-  const db = await getDb();
-  return !!db.prepare('SELECT 1 FROM bookmarks WHERE user_id = ? AND post_id = ?').get(userId, postId);
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT 1 FROM bookmarks WHERE user_id = ${userId} AND post_id = ${postId}`;
+  return result.length > 0;
 }
 
 export async function getBookmarkedPosts(userId: string): Promise<Post[]> {
-  const db = await getDb();
-  return (db.prepare(
-    `SELECT p.* FROM posts p INNER JOIN bookmarks b ON b.post_id = p.id WHERE b.user_id = ? ORDER BY b.created_at DESC`,
-  ).all(userId) as unknown[]).map(row<Post>);
+  await initSchema();
+  const db = getDb();
+  const result = await db`
+    SELECT p.* FROM posts p INNER JOIN bookmarks b ON b.post_id = p.id
+    WHERE b.user_id = ${userId} ORDER BY b.created_at DESC
+  `;
+  return rows<Post>(result);
 }
 
 // ─── Notification ─────────────────────────────────────────────────────────
@@ -457,34 +505,41 @@ export async function createNotification(
   postId?: string,
   content?: string,
 ): Promise<Notification> {
-  const db = await getDb();
-  const id = String(
-    db.prepare('INSERT INTO notifications (user_id, type, actor_id, post_id, content) VALUES (?, ?, ?, ?, ?)').run(
-      userId, type, actorId, postId ?? null, content ?? null,
-    ).lastInsertRowid,
-  );
-  return row<Notification>(db.prepare('SELECT * FROM notifications WHERE id = ?').get(id))!;
+  await initSchema();
+  const db = getDb();
+  const result = await db`
+    INSERT INTO notifications (user_id, type, actor_id, post_id, content)
+    VALUES (${userId}, ${type}, ${actorId}, ${postId ?? null}, ${content ?? null})
+    RETURNING *
+  `;
+  return row<Notification>(result[0])!;
 }
 
 export async function getNotificationsByUserId(userId: string): Promise<Notification[]> {
-  const db = await getDb();
-  return (db.prepare('SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC').all(userId) as unknown[]).map(row<Notification>);
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT * FROM notifications WHERE user_id = ${userId} ORDER BY created_at DESC`;
+  return rows<Notification>(result);
 }
 
 export async function getUnreadNotificationsCount(userId: string): Promise<number> {
-  const db = await getDb();
-  const r = db.prepare('SELECT COUNT(*) as c FROM notifications WHERE user_id = ? AND read = 0').get(userId) as { c: number };
-  return r.c;
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT COUNT(*) as c FROM notifications WHERE user_id = ${userId} AND read = FALSE`;
+  return Number(result[0]?.c ?? 0);
 }
 
 export async function markNotificationAsRead(notificationId: string): Promise<boolean> {
-  const db = await getDb();
-  return db.prepare('UPDATE notifications SET read = 1 WHERE id = ?').run(notificationId).changes > 0;
+  await initSchema();
+  const db = getDb();
+  const result = await db`UPDATE notifications SET read = TRUE WHERE id = ${notificationId}`;
+  return (result.rowCount ?? 0) > 0;
 }
 
 export async function markAllNotificationsAsRead(userId: string): Promise<void> {
-  const db = await getDb();
-  db.prepare('UPDATE notifications SET read = 1 WHERE user_id = ?').run(userId);
+  await initSchema();
+  const db = getDb();
+  await db`UPDATE notifications SET read = TRUE WHERE user_id = ${userId}`;
 }
 
 // ─── Message ──────────────────────────────────────────────────────────────
@@ -499,50 +554,59 @@ export interface Message {
 }
 
 export async function createMessage(senderId: string, receiverId: string, content: string): Promise<Message> {
-  const db = await getDb();
-  const id = String(
-    db.prepare('INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)').run(senderId, receiverId, content).lastInsertRowid,
-  );
-  return row<Message>(db.prepare('SELECT * FROM messages WHERE id = ?').get(id))!;
+  await initSchema();
+  const db = getDb();
+  const result = await db`
+    INSERT INTO messages (sender_id, receiver_id, content)
+    VALUES (${senderId}, ${receiverId}, ${content})
+    RETURNING *
+  `;
+  return row<Message>(result[0])!;
 }
 
 export async function getConversation(userId1: string, userId2: string): Promise<Message[]> {
-  const db = await getDb();
-  return (db.prepare(
-    `SELECT * FROM messages
-     WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
-     ORDER BY created_at ASC`,
-  ).all(userId1, userId2, userId2, userId1) as unknown[]).map(row<Message>);
+  await initSchema();
+  const db = getDb();
+  const result = await db`
+    SELECT * FROM messages
+    WHERE (sender_id = ${userId1} AND receiver_id = ${userId2})
+       OR (sender_id = ${userId2} AND receiver_id = ${userId1})
+    ORDER BY created_at ASC
+  `;
+  return rows<Message>(result);
 }
 
 export async function getConversations(userId: string): Promise<Array<{ userId: string; lastMessage: Message }>> {
-  const db = await getDb();
-  const rows = db.prepare(
-    `SELECT * FROM (
-       SELECT *,
-         ROW_NUMBER() OVER (
-           PARTITION BY CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END
-           ORDER BY created_at DESC
-         ) as rn
-       FROM messages
-       WHERE sender_id = ? OR receiver_id = ?
-     ) sub WHERE rn = 1 ORDER BY created_at DESC`,
-  ).all(userId, userId, userId) as unknown[];
-  return rows.map((r) => {
+  await initSchema();
+  const db = getDb();
+  const result = await db`
+    SELECT DISTINCT ON (
+      CASE WHEN sender_id = ${userId} THEN receiver_id ELSE sender_id END
+    )
+    * FROM messages
+    WHERE sender_id = ${userId} OR receiver_id = ${userId}
+    ORDER BY
+      (CASE WHEN sender_id = ${userId} THEN receiver_id ELSE sender_id END),
+      created_at DESC
+  `;
+  return result.map((r) => {
     const msg = row<Message>(r)!;
     return { userId: msg.senderId === userId ? msg.receiverId : msg.senderId, lastMessage: msg };
   });
 }
 
 export async function getUnreadMessagesCount(userId: string): Promise<number> {
-  const db = await getDb();
-  const r = db.prepare('SELECT COUNT(*) as c FROM messages WHERE receiver_id = ? AND read = 0').get(userId) as { c: number };
-  return r.c;
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT COUNT(*) as c FROM messages WHERE receiver_id = ${userId} AND read = FALSE`;
+  return Number(result[0]?.c ?? 0);
 }
 
 export async function markMessageAsRead(messageId: string): Promise<boolean> {
-  const db = await getDb();
-  return db.prepare('UPDATE messages SET read = 1 WHERE id = ?').run(messageId).changes > 0;
+  await initSchema();
+  const db = getDb();
+  const result = await db`UPDATE messages SET read = TRUE WHERE id = ${messageId}`;
+  return (result.rowCount ?? 0) > 0;
 }
 
 // ─── Block ─────────────────────────────────────────────────────────────────
@@ -555,32 +619,42 @@ export interface Block {
 }
 
 export async function blockUser(blockerId: string, blockedId: string): Promise<Block | undefined> {
-  const db = await getDb();
+  await initSchema();
+  const db = getDb();
   try {
-    const id = String(
-      db.prepare('INSERT INTO blocks (blocker_id, blocked_id) VALUES (?, ?)').run(blockerId, blockedId).lastInsertRowid,
-    );
-    return row<Block>(db.prepare('SELECT * FROM blocks WHERE id = ?').get(id));
+    const result = await db`
+      INSERT INTO blocks (blocker_id, blocked_id)
+      VALUES (${blockerId}, ${blockedId})
+      RETURNING *
+    `;
+    return row<Block>(result[0]);
   } catch {
     return undefined;
   }
 }
 
 export async function unblockUser(blockerId: string, blockedId: string): Promise<boolean> {
-  const db = await getDb();
-  return db.prepare('DELETE FROM blocks WHERE blocker_id = ? AND blocked_id = ?').run(blockerId, blockedId).changes > 0;
+  await initSchema();
+  const db = getDb();
+  const result = await db`DELETE FROM blocks WHERE blocker_id = ${blockerId} AND blocked_id = ${blockedId}`;
+  return (result.rowCount ?? 0) > 0;
 }
 
 export async function isUserBlocked(blockerId: string, blockedId: string): Promise<boolean> {
-  const db = await getDb();
-  return !!db.prepare('SELECT 1 FROM blocks WHERE blocker_id = ? AND blocked_id = ?').get(blockerId, blockedId);
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT 1 FROM blocks WHERE blocker_id = ${blockerId} AND blocked_id = ${blockedId}`;
+  return result.length > 0;
 }
 
 export async function getBlockedUsers(userId: string): Promise<User[]> {
-  const db = await getDb();
-  return (db.prepare(
-    `SELECT u.* FROM users u INNER JOIN blocks b ON b.blocked_id = u.id WHERE b.blocker_id = ?`,
-  ).all(userId) as unknown[]).map(row<User>);
+  await initSchema();
+  const db = getDb();
+  const result = await db`
+    SELECT u.* FROM users u INNER JOIN blocks b ON b.blocked_id = u.id
+    WHERE b.blocker_id = ${userId}
+  `;
+  return rows<User>(result);
 }
 
 // ─── Report ───────────────────────────────────────────────────────────────
@@ -603,21 +677,26 @@ export async function createReport(
   postId?: string,
   userId?: string,
 ): Promise<Report> {
-  const db = await getDb();
-  const id = String(
-    db.prepare(
-      'INSERT INTO reports (reporter_id, post_id, user_id, reason, description) VALUES (?, ?, ?, ?, ?)',
-    ).run(reporterId, postId ?? null, userId ?? null, reason, description).lastInsertRowid,
-  );
-  return row<Report>(db.prepare('SELECT * FROM reports WHERE id = ?').get(id))!;
+  await initSchema();
+  const db = getDb();
+  const result = await db`
+    INSERT INTO reports (reporter_id, post_id, user_id, reason, description)
+    VALUES (${reporterId}, ${postId ?? null}, ${userId ?? null}, ${reason}, ${description})
+    RETURNING *
+  `;
+  return row<Report>(result[0])!;
 }
 
 export async function getReports(status?: Report['status']): Promise<Report[]> {
-  const db = await getDb();
+  await initSchema();
+  const db = getDb();
+  let result;
   if (status) {
-    return (db.prepare('SELECT * FROM reports WHERE status = ? ORDER BY created_at DESC').all(status) as unknown[]).map(row<Report>);
+    result = await db`SELECT * FROM reports WHERE status = ${status} ORDER BY created_at DESC`;
+  } else {
+    result = await db`SELECT * FROM reports ORDER BY created_at DESC`;
   }
-  return (db.prepare('SELECT * FROM reports ORDER BY created_at DESC').all() as unknown[]).map(row<Report>);
+  return rows<Report>(result);
 }
 
 // ─── Hashtag ──────────────────────────────────────────────────────────────
@@ -630,25 +709,32 @@ export interface Hashtag {
 }
 
 async function extractHashtags(content: string): Promise<void> {
+  await initSchema();
   const tags = content.match(/#\w+/g) ?? [];
-  const db = await getDb();
+  if (tags.length === 0) return;
+  const db = getDb();
   for (const raw of tags) {
     const tag = raw.slice(1).toLowerCase();
-    db.prepare(
-      `INSERT INTO hashtags (tag, count, last_used) VALUES (?, 1, datetime('now'))
-       ON CONFLICT(tag) DO UPDATE SET count = count + 1, last_used = datetime('now')`,
-    ).run(tag);
+    await db`
+      INSERT INTO hashtags (tag, count, last_used)
+      VALUES (${tag}, 1, NOW())
+      ON CONFLICT(tag) DO UPDATE SET count = hashtags.count + 1, last_used = NOW()
+    `;
   }
 }
 
 export async function getTrendingHashtags(limit: number = 10): Promise<Hashtag[]> {
-  const db = await getDb();
-  return (db.prepare('SELECT * FROM hashtags ORDER BY count DESC LIMIT ?').all(limit) as unknown[]).map(row<Hashtag>);
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT * FROM hashtags ORDER BY count DESC LIMIT ${limit}`;
+  return rows<Hashtag>(result);
 }
 
 export async function searchHashtag(tag: string): Promise<Hashtag | undefined> {
-  const db = await getDb();
-  return row<Hashtag>(db.prepare('SELECT * FROM hashtags WHERE tag = ?').get(tag.toLowerCase()));
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT * FROM hashtags WHERE tag = ${tag.toLowerCase()}`;
+  return row<Hashtag>(result[0] ?? null);
 }
 
 // ─── User Preferences ─────────────────────────────────────────────────────
@@ -667,11 +753,10 @@ export interface UserPreferences {
 }
 
 export async function getUserPreferences(userId: string): Promise<UserPreferences | undefined> {
-  const db = await getDb();
-  const r = db.prepare('SELECT * FROM user_preferences WHERE user_id = ?').get(userId) as {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [key: string]: any;
-  } | undefined;
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT * FROM user_preferences WHERE user_id = ${userId}`;
+  const r = result[0] as Record<string, unknown> | undefined;
   if (!r) return undefined;
   return {
     userId:       String(r.user_id),
@@ -691,21 +776,26 @@ export async function updateUserPreferences(
   userId: string,
   preferences: Partial<UserPreferences>,
 ): Promise<UserPreferences> {
-  const db = await getDb();
-  if (!(await getUserPreferences(userId))) {
-    db.prepare('INSERT INTO user_preferences (user_id) VALUES (?)').run(userId);
+  await initSchema();
+  const db = getDb();
+
+  const existing = await db`SELECT 1 FROM user_preferences WHERE user_id = ${userId}`;
+  if (existing.length === 0) {
+    await db`INSERT INTO user_preferences (user_id) VALUES (${userId})`;
   }
-  const sets: string[] = ['updated_at = datetime("now")'];
+
+  const sets: string[] = ['updated_at = NOW()'];
   const vals: unknown[] = [];
-  if (preferences.theme !== undefined)             { sets.push('theme = ?');              vals.push(preferences.theme); }
-  if (preferences.emailNotifications !== undefined)  { sets.push('email_notifications = ?'); vals.push(preferences.emailNotifications ? 1 : 0); }
+  if (preferences.theme !== undefined)             { sets.push('theme = $' + (vals.length + 1)); vals.push(preferences.theme); }
+  if (preferences.emailNotifications !== undefined)  { sets.push('email_notifications = $' + (vals.length + 1)); vals.push(preferences.emailNotifications); }
   if (preferences.notificationSettings) {
-    sets.push('notif_likes = ?');     vals.push(preferences.notificationSettings.likes ? 1 : 0);
-    sets.push('notif_comments = ?');  vals.push(preferences.notificationSettings.comments ? 1 : 0);
-    sets.push('notif_follows = ?');   vals.push(preferences.notificationSettings.follows ? 1 : 0);
-    sets.push('notif_messages = ?');   vals.push(preferences.notificationSettings.messages ? 1 : 0);
+    sets.push('notif_likes = $' + (vals.length + 1));     vals.push(preferences.notificationSettings.likes);
+    sets.push('notif_comments = $' + (vals.length + 1)); vals.push(preferences.notificationSettings.comments);
+    sets.push('notif_follows = $' + (vals.length + 1)); vals.push(preferences.notificationSettings.follows);
+    sets.push('notif_messages = $' + (vals.length + 1)); vals.push(preferences.notificationSettings.messages);
   }
   vals.push(userId);
-  db.prepare(`UPDATE user_preferences SET ${sets.join(', ')} WHERE user_id = ?`).run(...vals);
+
+  await db`UPDATE user_preferences SET ${db.raw(sets.join(', '))} WHERE user_id = ${userId}`;
   return (await getUserPreferences(userId))!;
 }

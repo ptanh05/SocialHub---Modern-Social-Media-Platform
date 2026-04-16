@@ -29,7 +29,7 @@ export default function RegisterPage() {
       await register(email, username, password, name);
       router.push('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      setError(err instanceof Error ? err.message : 'Đăng ký thất bại');
     } finally {
       setLoading(false);
     }
@@ -39,8 +39,8 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-2 text-center">
-          <CardTitle className="text-2xl">Join SocialHub</CardTitle>
-          <CardDescription>Create your account to get started</CardDescription>
+          <CardTitle className="text-2xl">Tham gia SocialHub</CardTitle>
+          <CardDescription>Tạo tài khoản để bắt đầu kết nối</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -52,12 +52,12 @@ export default function RegisterPage() {
 
             <div className="space-y-2">
               <label htmlFor="name" className="text-sm font-medium text-foreground">
-                Full Name
+                Họ và tên
               </label>
               <Input
                 id="name"
                 type="text"
-                placeholder="John Doe"
+                placeholder="Nguyễn Văn A"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -82,12 +82,12 @@ export default function RegisterPage() {
 
             <div className="space-y-2">
               <label htmlFor="username" className="text-sm font-medium text-foreground">
-                Username
+                Tên đăng nhập
               </label>
               <Input
                 id="username"
                 type="text"
-                placeholder="johndoe"
+                placeholder="nguyenvana"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -97,13 +97,13 @@ export default function RegisterPage() {
 
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium text-foreground">
-                Password
+                Mật khẩu
               </label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="At least 8 characters"
+                  placeholder="Tối thiểu 8 ký tự"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -114,7 +114,7 @@ export default function RegisterPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 >
                   {showPassword ? (
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
@@ -126,14 +126,14 @@ export default function RegisterPage() {
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creating account...' : 'Sign Up'}
+              {loading ? 'Đang tạo tài khoản...' : 'Đăng ký'}
             </Button>
           </form>
 
           <div className="mt-4 text-center text-sm">
-            <span className="text-muted-foreground">Already have an account? </span>
+            <span className="text-muted-foreground">Đã có tài khoản? </span>
             <Link href="/login" className="font-semibold text-primary hover:underline">
-              Sign in
+              Đăng nhập
             </Link>
           </div>
         </CardContent>
