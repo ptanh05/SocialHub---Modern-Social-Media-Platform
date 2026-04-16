@@ -8,7 +8,10 @@ import {
   getLikeCount,
   createNotification,
   getUserPreferences,
+  getUserById,
+  pushSSEEvent,
 } from '@/lib/db';
+import { sendEmail, notifyNewLikeEmail } from '@/lib/email';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -75,6 +78,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const prefs = await getUserPreferences(post.userId);
       if (prefs?.notificationSettings.likes !== false) {
         await createNotification(post.userId, 'like', payload.userId, id);
+
+        // Gửi email notification nếu người nhận có bật email_notifications
+        if (prefs?.emailNotifications) {
+          const [postAuthor, liker] = await Promise.all([
+            getUserById(post.userId),
+            getUserById(payload.userId),
+          ]);
+          if (postAuthor && liker) {
+            const emailContent = notifyNewLikeEmail(
+              postAuthor.name,
+              liker.name,
+              liker.username,
+              post.content,
+              id
+            );
+            await sendEmail({ to: postAuthor.email, ...emailContent });
+          }
+        }
       }
     }
 

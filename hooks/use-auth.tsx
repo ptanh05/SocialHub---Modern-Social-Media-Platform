@@ -9,6 +9,8 @@ interface User {
   name: string;
   bio?: string;
   avatar?: string;
+  isVerified?: boolean;
+  badge?: string;
 }
 
 interface AuthContextType {

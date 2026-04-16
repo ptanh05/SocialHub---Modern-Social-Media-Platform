@@ -17,6 +17,7 @@ export function CreatePost({ onPostCreated }: { onPostCreated?: () => void }) {
   const [content, setContent] = useState('');
   const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState('');
   const [visible, setVisible] = useState(false);
   const [charCount, setCharCount] = useState(0);
@@ -67,14 +68,40 @@ export function CreatePost({ onPostCreated }: { onPostCreated?: () => void }) {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setImage(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Validate
+    if (!file.type.startsWith('image/')) {
+      setError('Chỉ chấp nhận file ảnh');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Ảnh quá lớn (tối đa 5MB)');
+      return;
+    }
+
+    setUploadingImage(true);
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Upload failed');
+      }
+      const { url } = await res.json();
+      setImage(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload ảnh thất bại');
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -159,12 +186,21 @@ export function CreatePost({ onPostCreated }: { onPostCreated?: () => void }) {
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
-                disabled={loading}
+                disabled={loading || uploadingImage}
                 className="hidden"
               />
               <div className="flex items-center gap-2 text-primary hover:opacity-80 transition-all duration-200 group-hover:scale-105">
-                <ImageIcon className="w-5 h-5" />
-                <span className="text-sm">Thêm ảnh</span>
+                {uploadingImage ? (
+                  <>
+                    <span className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                    <span className="text-sm">Đang tải ảnh...</span>
+                  </>
+                ) : (
+                  <>
+                    <ImageIcon className="w-5 h-5" />
+                    <span className="text-sm">Thêm ảnh</span>
+                  </>
+                )}
               </div>
             </label>
             <Button

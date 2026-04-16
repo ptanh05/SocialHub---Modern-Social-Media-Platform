@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
         return {
           ...post,
           author: author
-            ? { id: author.id, name: author.name, username: author.username, avatar: author.avatar }
+            ? { id: author.id, name: author.name, username: author.username, avatar: author.avatar, isVerified: author.isVerified, badge: author.badge }
             : null,
         };
       })

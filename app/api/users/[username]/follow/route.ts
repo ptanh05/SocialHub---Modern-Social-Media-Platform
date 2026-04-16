@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import {
   getUserByUsername,
+  getUserById,
   addFollow,
   removeFollow,
   isFollowing,
@@ -9,6 +10,7 @@ import {
   createNotification,
   getUserPreferences,
 } from '@/lib/db';
+import { sendEmail, notifyNewFollowerEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ username: string }> }) {
   try {
@@ -68,6 +70,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const prefs = await getUserPreferences(targetUser.id);
     if (prefs?.notificationSettings.follows !== false) {
       await createNotification(targetUser.id, 'follow', payload.userId);
+
+      // Gửi email notification nếu người nhận có bật email_notifications
+      if (prefs?.emailNotifications) {
+        const follower = await getUserById(payload.userId);
+        if (follower) {
+          const emailContent = notifyNewFollowerEmail(follower.name, follower.username, targetUser.name);
+          await sendEmail({ to: targetUser.email, ...emailContent });
+        }
+      }
     }
 
     return NextResponse.json({ success: true, message: 'Đã theo dõi người dùng' });

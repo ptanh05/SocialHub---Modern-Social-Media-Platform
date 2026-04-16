@@ -17,7 +17,7 @@ function row<T>(raw: Record<string, unknown> | null): T | undefined {
   if (!raw) return undefined;
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(raw)) {
-    if (k === 'read' || k.startsWith('notif_') || k === 'email_notifications') {
+    if (k === 'read' || k.startsWith('notif_') || k === 'email_notifications' || k === 'is_verified') {
       out[k] = Boolean(v);
     } else if (typeof v === 'number' && (k.endsWith('_id') || k === 'id' || k === 'count')) {
       out[k] = String(v);
@@ -44,6 +44,8 @@ CREATE TABLE IF NOT EXISTS users (
   bio         TEXT    NOT NULL DEFAULT '',
   avatar      TEXT    NOT NULL DEFAULT '',
   theme       TEXT    NOT NULL DEFAULT 'system',
+  is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+  badge       TEXT    NOT NULL DEFAULT '',
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -152,6 +154,15 @@ CREATE TABLE IF NOT EXISTS reposts (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(user_id, post_id)
 );
+
+CREATE TABLE IF NOT EXISTS sse_events (
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  event_type  TEXT    NOT NULL,
+  payload     JSONB   NOT NULL DEFAULT '{}',
+  delivered   BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 `;
 
 let schemaInitialized = false;
@@ -179,6 +190,8 @@ export interface User {
   bio: string;
   avatar: string;
   theme?: 'light' | 'dark' | 'system';
+  isVerified?: boolean;
+  badge?: string;
   createdAt: string;
 }
 
@@ -250,6 +263,33 @@ export async function updateUser(
   vals.push(id);
   await db.query(`UPDATE users SET ${setPairs.join(', ')} WHERE id = $${vals.length}`, vals);
   return getUserById(id);
+}
+
+export async function setUserVerified(userId: string, verified: boolean): Promise<void> {
+  await initSchema();
+  const db = getDb();
+  await db`UPDATE users SET is_verified = ${verified} WHERE id = ${userId}`;
+}
+
+export async function setUserBadge(userId: string, badge: string): Promise<void> {
+  await initSchema();
+  const db = getDb();
+  await db`UPDATE users SET badge = ${badge} WHERE id = ${userId}`;
+}
+
+export async function getTopCreators(limit: number = 10): Promise<User[]> {
+  await initSchema();
+  const db = getDb();
+  const result = await db`
+    SELECT u.*,
+      (SELECT COUNT(*) FROM posts p WHERE p.user_id = u.id) as post_count,
+      (SELECT COUNT(*) FROM follows f WHERE f.following_id = u.id) as follower_count
+    FROM users u
+    WHERE u.badge = 'creator'
+    ORDER BY follower_count DESC
+    LIMIT ${limit}
+  `;
+  return rows<User>(result);
 }
 
 // ─── Post ─────────────────────────────────────────────────────────────────
@@ -890,4 +930,54 @@ export async function getRepostsByUserId(userId: string): Promise<Repost[]> {
   const db = getDb();
   const result = await db`SELECT * FROM reposts WHERE user_id = ${userId} ORDER BY created_at DESC`;
   return rows<Repost>(result);
+}
+
+// ─── SSE Events ────────────────────────────────────────────────────────────
+
+export interface SSEEvent {
+  id: string;
+  userId: string;
+  eventType: string;
+  payload: Record<string, unknown>;
+  delivered: boolean;
+  createdAt: string;
+}
+
+export async function pushSSEEvent(
+  userId: string,
+  eventType: string,
+  payload: Record<string, unknown> = {},
+): Promise<void> {
+  await initSchema();
+  const db = getDb();
+  await db`
+    INSERT INTO sse_events (user_id, event_type, payload)
+    VALUES (${userId}, ${eventType}, ${JSON.stringify(payload)})
+  `;
+}
+
+export async function consumeSSEEvents(userId: string): Promise<SSEEvent[]> {
+  await initSchema();
+  const db = getDb();
+  const result = await db`
+    SELECT id, user_id, event_type, payload, delivered, created_at
+    FROM sse_events
+    WHERE user_id = ${userId} AND delivered = FALSE
+    ORDER BY created_at ASC
+    LIMIT 50
+  `;
+  if (result.length === 0) return [];
+  const ids = result.map(r => Number((r as Record<string, unknown>).id));
+  await db`UPDATE sse_events SET delivered = TRUE WHERE id = ANY(${ids})`;
+  return result.map(r => {
+    const rec = r as Record<string, unknown>;
+    return {
+      id:         String(rec.id),
+      userId:     String(rec.user_id),
+      eventType:  String(rec.event_type),
+      payload:    rec.payload as Record<string, unknown>,
+      delivered:  Boolean(rec.delivered),
+      createdAt:  String(rec.created_at),
+    };
+  });
 }

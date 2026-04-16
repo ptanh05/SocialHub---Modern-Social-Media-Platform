@@ -36,6 +36,8 @@ export async function GET(request: NextRequest) {
       name: user.name,
       bio: user.bio,
       avatar: user.avatar,
+      isVerified: user.isVerified,
+      badge: user.badge,
     });
   } catch (error) {
     console.error('Me endpoint error:', error);

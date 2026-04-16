@@ -9,6 +9,7 @@ import {
   getUserPreferences,
 } from '@/lib/db';
 import { commentSchema } from '@/lib/schemas';
+import { sendEmail, notifyNewCommentEmail } from '@/lib/email';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
