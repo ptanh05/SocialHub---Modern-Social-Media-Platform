@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import { createMessage, getConversations, getUnreadMessagesCount } from '@/lib/db';
+import { createMessage, getConversations, getUnreadMessagesCount, getUserById, getUserPreferences } from '@/lib/db';
 import { z } from 'zod';
+import { sendEmail, notifyNewMessageEmail } from '@/lib/email';
 
 const createMessageSchema = z.object({
   receiverId: z.string().min(1),

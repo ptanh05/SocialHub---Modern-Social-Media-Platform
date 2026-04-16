@@ -100,14 +100,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
         // Gửi email notification nếu người nhận có bật email_notifications
         if (prefs?.emailNotifications && author) {
-          const emailContent = notifyNewCommentEmail(
-            post.author?.name ?? 'Người dùng',
-            author.name,
-            author.username,
-            content,
-            post.content
-          );
-          await sendEmail({ to: post.author!.email, ...emailContent });
+          const postAuthor = await getUserById(post.userId);
+          if (postAuthor) {
+            const emailContent = notifyNewCommentEmail(
+              postAuthor.name,
+              author.name,
+              author.username,
+              content,
+              post.content
+            );
+            await sendEmail({ to: postAuthor.email, ...emailContent });
+          }
         }
       }
     }

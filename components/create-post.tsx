@@ -205,13 +205,18 @@ export function CreatePost({ onPostCreated }: { onPostCreated?: () => void }) {
             </label>
             <Button
               type="submit"
-              disabled={!content.trim() || loading}
+              disabled={!content.trim() || loading || uploadingImage}
               className="transition-all duration-200 active:scale-95 disabled:opacity-50"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Đang đăng...
+                </span>
+              ) : uploadingImage ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Đang tải ảnh...
                 </span>
               ) : (
                 'Đăng bài'
