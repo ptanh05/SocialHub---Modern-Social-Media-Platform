@@ -71,6 +71,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const prefs = await getUserPreferences(targetUser.id);
     if (prefs?.notificationSettings.follows !== false) {
       await createNotification(targetUser.id, 'follow', payload.userId);
+      await pushSSEEvent(targetUser.id, 'notification:follow', {
+        actorId: payload.userId,
+      });
 
       // Gửi email notification nếu người nhận có bật email_notifications
       if (prefs?.emailNotifications) {

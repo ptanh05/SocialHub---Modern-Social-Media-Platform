@@ -8,8 +8,16 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { MentionDropdown } from '@/components/mention-dropdown';
-import { ImageIcon, X } from 'lucide-react';
+import { ImageIcon, X, BadgeCheck } from 'lucide-react';
 import Image from 'next/image';
+
+function getBadgeEmoji(badge: string) {
+  const map: Record<string, string> = {
+    creator: '✨', early_adopter: '🚀', contributor: '🏆',
+    verified: '✅', staff: '💼',
+  };
+  return map[badge] || '';
+}
 
 export function CreatePost({ onPostCreated }: { onPostCreated?: () => void }) {
   const { user } = useAuth();
@@ -120,7 +128,11 @@ export function CreatePost({ onPostCreated }: { onPostCreated?: () => void }) {
             <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-semibold text-sm text-foreground">{user.name}</p>
+            <p className="font-semibold text-sm text-foreground flex items-center gap-1">
+              {user.name}
+              {user.isVerified && <BadgeCheck className="w-4 h-4 text-blue-500" />}
+              {user.badge && <span className="text-xs">{getBadgeEmoji(user.badge)}</span>}
+            </p>
             <p className="text-xs text-muted-foreground">@{user.username}</p>
           </div>
         </div>
