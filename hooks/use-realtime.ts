@@ -26,7 +26,13 @@ export function useRealtime(options: UseRealtimeOptions = {}) {
         ? `/api/events?since=${encodeURIComponent(lastEventIdRef.current)}`
         : '/api/events';
       const res = await fetch(url, { credentials: 'include' });
-      if (!res.ok) return;
+      if (!res.ok) {
+        // 401 means not logged in — stop polling silently
+        if (res.status === 401) {
+          if (pollRef.current !== null) clearInterval(pollRef.current);
+        }
+        return;
+      }
       const events: RealtimeEvent[] = await res.json();
       if (events.length > 0) {
         lastEventIdRef.current = events[events.length - 1].id;

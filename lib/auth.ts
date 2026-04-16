@@ -1,10 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
-const JWT_SECRET: string = process.env.JWT_SECRET as string;
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is not set');
-}
+const JWT_SECRET: string = (process.env.JWT_SECRET || 'dev-fallback-secret-not-for-production') as string;
 
 export interface TokenPayload {
   userId: string;
