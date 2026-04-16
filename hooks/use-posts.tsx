@@ -1,6 +1,7 @@
 'use client';
 
-import useSWR, { useSWRInfinite } from 'swr';
+import useSWR from 'swr';
+import { infinite as useSWRInfinite } from 'swr/infinite';
 
 interface Post {
   id: string;
@@ -20,7 +21,7 @@ interface Post {
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export function usePosts() {
-  const { data, isLoading, error, mutate } = useSWRInfinite(
+  const { data, isLoading, error, mutate, setSize } = useSWRInfinite(
     (pageIndex) => `/api/posts?page=${pageIndex + 1}`,
     fetcher,
     {
@@ -72,6 +73,7 @@ export function usePosts() {
     createPost,
     deletePost,
     mutate,
+    setSize,
   };
 }
 
