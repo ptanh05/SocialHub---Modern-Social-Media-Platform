@@ -17,7 +17,7 @@ interface UserPreferences {
 export function usePreferences() {
   const { data, error, mutate } = useSWR<UserPreferences>(
     '/api/auth/preferences',
-    async (url) => {
+    async (url: string) => {
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch preferences');
       return res.json();

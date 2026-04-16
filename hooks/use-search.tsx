@@ -28,7 +28,7 @@ export function useSearch(query: string, type: 'all' | 'posts' | 'users' = 'all'
 
   const { data, error, mutate } = useSWR<SearchResults>(
     searchQuery && searchQuery.length >= 2 ? `/api/search?q=${encodeURIComponent(searchQuery)}&type=${type}` : null,
-    async (url) => {
+    async (url: string) => {
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to search');
       return res.json();
@@ -50,7 +50,7 @@ export function useSearch(query: string, type: 'all' | 'posts' | 'users' = 'all'
 export function useTrendingHashtags() {
   const { data, error } = useSWR(
     '/api/hashtags?trending=true',
-    async (url) => {
+    async (url: string) => {
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch trending hashtags');
       return res.json();
@@ -67,7 +67,7 @@ export function useTrendingHashtags() {
 export function useHashtag(tag: string) {
   const { data, error } = useSWR(
     tag ? `/api/hashtags?q=${encodeURIComponent(tag)}` : null,
-    async (url) => {
+    async (url: string) => {
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch hashtag');
       return res.json();

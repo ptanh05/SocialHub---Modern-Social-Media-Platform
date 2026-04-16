@@ -5,7 +5,7 @@ import { useCallback } from 'react';
 export function useReposts(postId: string) {
   const { data, mutate } = useSWR<{ reposted: boolean; count: number }>(
     postId ? `/api/posts/${postId}/repost` : null,
-    async (url) => {
+    async (url: string) => {
       const res = await fetch(url);
       return res.json();
     }

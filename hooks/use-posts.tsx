@@ -1,5 +1,6 @@
 'use client';
 
+import useSWR from 'swr';
 import useSWRInfinite from 'swr/infinite';
 
 interface Post {
@@ -77,7 +78,8 @@ export function usePosts() {
 }
 
 export function useUserPosts(username: string) {
-  const { data: posts = [], isLoading, error, mutate } = useSWR(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: posts = [], isLoading, error, mutate } = useSWR<any>(
     username ? `/api/users/${username}/posts` : null,
     fetcher
   );

@@ -29,7 +29,7 @@ function row<T>(raw: Record<string, unknown> | null): T | undefined {
 }
 
 function rows<T>(raw: Record<string, unknown>[]): T[] {
-  return raw.map(row<T>);
+  return raw.map((r) => row<T>(r) as T);
 }
 
 // ─── Schema Init ────────────────────────────────────────────────────────────
@@ -308,7 +308,7 @@ export async function deletePost(postId: string): Promise<boolean> {
   await initSchema();
   const db = getDb();
   const result = await db`DELETE FROM posts WHERE id = ${postId}`;
-  return (result.rowCount ?? 0) > 0;
+  return ((result as unknown as { rowCount?: number }).rowCount ?? 0) > 0;
 }
 
 // ─── Like ─────────────────────────────────────────────────────────────────
@@ -339,7 +339,7 @@ export async function removeLike(userId: string, postId: string): Promise<boolea
   await initSchema();
   const db = getDb();
   const result = await db`DELETE FROM likes WHERE user_id = ${userId} AND post_id = ${postId}`;
-  return (result.rowCount ?? 0) > 0;
+  return ((result as unknown as { rowCount?: number }).rowCount ?? 0) > 0;
 }
 
 export async function getLikeCount(postId: string): Promise<number> {
@@ -402,7 +402,7 @@ export async function deleteComment(commentId: string): Promise<boolean> {
   await initSchema();
   const db = getDb();
   const result = await db`DELETE FROM comments WHERE id = ${commentId}`;
-  return (result.rowCount ?? 0) > 0;
+  return ((result as unknown as { rowCount?: number }).rowCount ?? 0) > 0;
 }
 
 // ─── Follow ────────────────────────────────────────────────────────────────
@@ -433,7 +433,7 @@ export async function removeFollow(followerId: string, followingId: string): Pro
   await initSchema();
   const db = getDb();
   const result = await db`DELETE FROM follows WHERE follower_id = ${followerId} AND following_id = ${followingId}`;
-  return (result.rowCount ?? 0) > 0;
+  return ((result as unknown as { rowCount?: number }).rowCount ?? 0) > 0;
 }
 
 export async function isFollowing(followerId: string, followingId: string): Promise<boolean> {
@@ -505,7 +505,7 @@ export async function removeBookmark(userId: string, postId: string): Promise<bo
   await initSchema();
   const db = getDb();
   const result = await db`DELETE FROM bookmarks WHERE user_id = ${userId} AND post_id = ${postId}`;
-  return (result.rowCount ?? 0) > 0;
+  return ((result as unknown as { rowCount?: number }).rowCount ?? 0) > 0;
 }
 
 export async function isPostBookmarked(userId: string, postId: string): Promise<boolean> {
@@ -573,7 +573,7 @@ export async function markNotificationAsRead(notificationId: string): Promise<bo
   await initSchema();
   const db = getDb();
   const result = await db`UPDATE notifications SET read = TRUE WHERE id = ${notificationId}`;
-  return (result.rowCount ?? 0) > 0;
+  return ((result as unknown as { rowCount?: number }).rowCount ?? 0) > 0;
 }
 
 export async function markAllNotificationsAsRead(userId: string): Promise<void> {
@@ -646,7 +646,7 @@ export async function markMessageAsRead(messageId: string): Promise<boolean> {
   await initSchema();
   const db = getDb();
   const result = await db`UPDATE messages SET read = TRUE WHERE id = ${messageId}`;
-  return (result.rowCount ?? 0) > 0;
+  return ((result as unknown as { rowCount?: number }).rowCount ?? 0) > 0;
 }
 
 // ─── Block ─────────────────────────────────────────────────────────────────
@@ -677,7 +677,7 @@ export async function unblockUser(blockerId: string, blockedId: string): Promise
   await initSchema();
   const db = getDb();
   const result = await db`DELETE FROM blocks WHERE blocker_id = ${blockerId} AND blocked_id = ${blockedId}`;
-  return (result.rowCount ?? 0) > 0;
+  return ((result as unknown as { rowCount?: number }).rowCount ?? 0) > 0;
 }
 
 export async function isUserBlocked(blockerId: string, blockedId: string): Promise<boolean> {
@@ -868,7 +868,7 @@ export async function removeRepost(userId: string, postId: string): Promise<bool
   await initSchema();
   const db = getDb();
   const result = await db`DELETE FROM reposts WHERE user_id = ${userId} AND post_id = ${postId}`;
-  return (result.rowCount ?? 0) > 0;
+  return ((result as unknown as { rowCount?: number }).rowCount ?? 0) > 0;
 }
 
 export async function isPostRepostedByUser(userId: string, postId: string): Promise<boolean> {

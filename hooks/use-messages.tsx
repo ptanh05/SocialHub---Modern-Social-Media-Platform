@@ -64,11 +64,7 @@ export function useConversations() {
 export function useConversation(userId: string) {
   const { data, error, mutate } = useSWR<Message[]>(
     userId ? `/api/messages/${userId}` : null,
-    async (url) => {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('Failed to fetch conversation');
-      return res.json();
-    }
+    fetcher
   );
 
   const sendMessage = useCallback(
