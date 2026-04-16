@@ -1,308 +1,256 @@
-# SocialHub - Modern Social Media Platform
+# SocialHub - Nền tảng Mạng Xã Hội Hiện Đại
 
-A full-featured social media application built with Next.js, featuring user authentication, posts, interactions (likes/comments), and social features (follow, search, profiles).
+Một ứng dụng mạng xã hội đầy đủ tính năng được xây dựng với Next.js, hỗ trợ xác thực người dùng, bài viết, tương tác (like/bình luận), và các tính năng xã hội (theo dõi, tìm kiếm, hồ sơ). Giao diện hoàn toàn bằng tiếng Việt.
 
-## Features
+## Tính năng
 
-### Phase 1: Authentication ✓
-- JWT-based authentication system
-- Secure password hashing with bcryptjs
-- HttpOnly cookie storage
-- User registration and login
-- Protected routes with middleware
+### Giai đoạn 1: Xác thực ✓
+- Hệ thống xác thực dựa trên JWT
+- Hash mật khẩu bảo mật bằng bcryptjs
+- Lưu trữ HttpOnly cookie
+- Đăng ký và đăng nhập người dùng
+- Bảo vệ route bằng middleware
 
-### Phase 2: Feed & Posts ✓
-- Create, read, and delete posts
-- Post feed with pagination
-- Real-time post updates with SWR
-- Image upload support
-- Timestamp formatting (relative dates)
+### Giai đoạn 2: Trang chủ & Bài viết ✓
+- Tạo, đọc và xóa bài viết
+- Trang chủ có phân trang
+- Cập nhật bài viết thời gian thực với SWR
+- Hỗ trợ tải ảnh lên
+- Định dạng thời gian tương đối
 
-### Phase 3: Interactions ✓
-- Like/unlike posts with optimistic updates
-- Comment system with reply threads
-- Real-time interaction counts
-- Comment display and creation
+### Giai đoạn 3: Tương tác ✓
+- Thích/bỏ thích bài viết với cập nhật optimistic
+- Hệ thống bình luận
+- Số lượng tương tác thời gian thực
+- Hiển thị và tạo bình luận
 
-### Phase 4: Social Features ✓
-- Follow/unfollow users
-- User profiles with stats (followers, following, posts)
-- Global user search
-- Explore page to discover users
-- User bio and profile information
+### Giai đoạn 4: Tính năng Xã hội ✓
+- Theo dõi/bỏ theo dõi người dùng
+- Hồ sơ người dùng với thống kê (người theo dõi, đang theo dõi, bài viết)
+- Tìm kiếm người dùng toàn cầu
+- Trang khám phá để tìm người dùng
+- Bio và thông tin hồ sơ
 
-### Phase 5: Personalization ✓
-- Edit profile name and bio
-- Settings page for account management
-- Secure logout functionality
-- Profile management
+### Giai đoạn 5: Cá nhân hóa ✓
+- Chỉnh sửa tên và bio hồ sơ
+- Trang cài đặt quản lý tài khoản
+- Chức năng đăng xuất bảo mật
+- Quản lý hồ sơ
 
-### Phase 6: Polish & Deploy ✓
-- Modern UI with design tokens
+### Giai đoạn 6: Hoàn thiện & Triển khai ✓
+- UI hiện đại với design tokens
 - Loading skeletons
-- Error handling
-- 404 page
-- Responsive design
-- Clean navigation
+- Xử lý lỗi
+- Trang 404
+- Thiết kế responsive
+- Điều hướng sạch sẽ
 
-### Phase 7: Advanced Notifications ✓
-- Real-time notification system with polling
-- Notification bell with unread badge
-- Mark notifications as read (individual and all)
-- Notification types: likes, comments, follows, messages
-- Notification history and clearing
+### Giai đoạn 7: Thông báo nâng cao ✓
+- Hệ thống thông báo thời gian thực với polling
+- Chuông thông báo với badge chưa đọc
+- Đánh dấu thông báo đã đọc (từng cái và tất cả)
+- Loại thông báo: thích, bình luận, theo dõi, tin nhắn
+- Lịch sử thông báo và xóa
 
-### Phase 8: Direct Messaging ✓
-- One-to-one private messaging
-- Conversation list with last message preview
-- Real-time message updates (2-3 second polling)
-- Message read status tracking
-- Individual conversation threads
-- Real-time typing awareness
+### Giai đoạn 8: Nhắn tin trực tiếp ✓
+- Nhắn tin riêng tư một-một
+- Danh sách cuộc trò chuyện với xem trước tin nhắn cuối
+- Cập nhật tin nhắn thời gian thực (polling 2-3 giây)
+- Theo dõi trạng thái đã đọc
+- Luồng trò chuyện riêng
+- Nhiều cuộc trò chuyện đồng thời
 
-### Phase 9: Post Management & Comments ✓
-- Edit posts after creation
-- Delete comments (by author or post owner)
-- Comment deletion with proper authorization
-- Cascade deletion of related data
+### Giai đoạn 9: Quản lý Bài viết & Bình luận ✓
+- Chỉnh sửa bài viết sau khi tạo
+- Xóa bình luận (bởi tác giả hoặc chủ bài viết)
+- Xóa bình luận với ủy quyền đúng
+- Xóa cascade dữ liệu liên quan
 
-### Phase 10: Advanced Search & Hashtags ✓
-- Full-text search for posts and users
-- Hashtag support and trending hashtags
-- Hashtag pages with related posts
-- Search filtering by type (posts/users/all)
-- Trending hashtags section
+### Giai đoạn 10: Tìm kiếm & Hashtag nâng cao ✓
+- Tìm kiếm toàn văn bản bài viết và người dùng
+- Hỗ trợ hashtag và hashtag thịnh hành
+- Trang hashtag với bài viết liên quan
+- Lọc tìm kiếm theo loại (bài viết/người dùng/tất cả)
+- Phần hashtag thịnh hành
 
-### Phase 11: Theme & Preferences ✓
-- Light/dark/system theme toggle
-- Theme persistence in user preferences
-- Notification preference settings (likes, comments, follows, messages)
-- Email notification toggle
-- Settings page with all preferences
+### Giai đoạn 11: Giao diện & Tùy chỉnh ✓
+- Chuyển giao diện sáng/tối/hệ thống
+- Lưu giao diện vào tùy chỉnh người dùng
+- Cài đặt thông báo (thích, bình luận, theo dõi, tin nhắn)
+- Nút thông báo email
+- Trang cài đặt với tất cả tùy chọn
 
-### Phase 12: Pagination & Infinite Scroll ✓
-- Infinite scroll component with Intersection Observer
-- Pagination hook for managing page loads
-- Auto-load more content on scroll
-- Loading indicators
+### Giai đoạn 12: Phân trang & Cuộn vô hạn ✓
+- Component cuộn vô hạn với Intersection Observer
+- Hook phân trang quản lý tải trang
+- Tự động tải thêm khi cuộn
+- Chỉ báo loading
 
-### Phase 13: Bookmarks, Blocking & Reports ✓
-- Save/bookmark posts for later
-- Block users to prevent interaction
-- View blocked users list
-- Unblock functionality
-- Report posts and users with reasons
-- Report history tracking
+### Giai đoạn 13: Đánh dấu, Chặn & Báo cáo ✓
+- Lưu/đánh dấu bài viết để xem sau
+- Chặn người dùng để ngăn tương tác
+- Xem danh sách người dùng bị chặn
+- Bỏ chặn người dùng
+- Báo cáo bài viết và người dùng kèm lý do
+- Theo dõi lịch sử báo cáo
 
-### Phase 14: Activity Feed & Analytics ✓
-- User activity feed grouped by date
-- Analytics dashboard with engagement metrics
-- Charts showing engagement over time
-- Post performance summaries
-- Follower growth tracking
-- Analytics by week/month
+### Giai đoạn 14: Hoạt động & Phân tích ✓
+- Nguồn cấp hoạt động người dùng theo ngày
+- Dashboard phân tích với số liệu tương tác
+- Biểu đồ hiển thị tương tác theo thời gian
+- Tóm tắt hiệu suất bài viết
+- Theo dõi tăng trưởng người theo dõi
+- Phân tích theo tuần
 
 ## Tech Stack
 
 - **Framework**: Next.js 16
-- **Auth**: JWT with HttpOnly cookies
-- **Password Hashing**: bcryptjs
-- **Data Fetching**: SWR (Client-side caching with polling)
-- **UI Components**: shadcn/ui with Radix UI
-- **Styling**: Tailwind CSS with custom design tokens
+- **Auth**: JWT với HttpOnly cookies
+- **Hash mật khẩu**: bcryptjs
+- **Data Fetching**: SWR (Client-side caching với polling)
+- **UI Components**: shadcn/ui với Radix UI
+- **Styling**: Tailwind CSS với custom design tokens
 - **Validation**: Zod
 - **Icons**: Lucide React
-- **Charts**: Recharts for analytics
-- **Database**: PostgreSQL via Neon (serverless, edge-ready)
-- **Real-time**: Polling for notifications and messages (WebSocket ready)
+- **Charts**: Recharts cho phân tích
+- **Database**: SQLite qua `better-sqlite3` (local, persistent)
+- **Real-time**: Polling cho thông báo và tin nhắn (sẵn sàng WebSocket)
 
-## Project Structure
+## Cấu trúc dự án
 
 ```
 app/
-├── (auth)/                 # Auth routes (login, register)
-├── (app)/                  # Protected routes
-│   ├── feed/              # Main feed page
-│   ├── profile/[username]/ # User profiles
-│   ├── explore/           # User discovery/search
-│   ├── settings/          # Account settings with theme & preferences
-│   ├── messages/          # Direct messaging
-│   ├── messages/[userId]/ # Conversation with specific user
-│   ├── search/            # Search results
-│   ├── hashtag/[tag]/     # Hashtag page
-│   ├── bookmarks/         # Saved posts
-│   ├── blocked/           # Blocked users list
-│   ├── activity/          # User activity feed
-│   ├── analytics/         # Analytics dashboard
-│   └── layout.tsx         # Protected layout with auth guard
+├── (auth)/                 # Route xác thực (đăng nhập, đăng ký)
+├── (app)/                  # Route được bảo vệ
+│   ├── feed/              # Trang chủ chính
+│   ├── profile/[username]/ # Hồ sơ người dùng
+│   ├── explore/           # Khám phá người dùng / tìm kiếm
+│   ├── settings/          # Cài đặt tài khoản & giao diện
+│   ├── messages/          # Nhắn tin trực tiếp
+│   ├── messages/[userId]/ # Trò chuyện với người dùng cụ thể
+│   ├── search/            # Kết quả tìm kiếm
+│   ├── hashtag/[tag]/     # Trang hashtag
+│   ├── bookmarks/         # Bài viết đã lưu
+│   ├── blocked/           # Danh sách người bị chặn
+│   ├── activity/          # Nguồn cấp hoạt động người dùng
+│   ├── analytics/         # Dashboard phân tích
+│   └── layout.tsx         # Layout được bảo vệ với auth guard
 ├── api/                    # API routes
-│   ├── auth/              # Authentication endpoints
-│   ├── posts/             # Post management
-│   ├── users/             # User endpoints
-│   ├── notifications/     # Notification endpoints
-│   ├── messages/          # Messaging endpoints
-│   ├── comments/          # Comment management
-│   ├── search/            # Search endpoints
-│   ├── hashtags/          # Hashtag endpoints
-│   └── reports/           # Report endpoints
+│   ├── auth/              # Endpoint xác thực
+│   ├── posts/             # Quản lý bài viết
+│   ├── users/             # Endpoint người dùng
+│   ├── notifications/     # Endpoint thông báo
+│   ├── messages/          # Endpoint nhắn tin
+│   ├── comments/          # Quản lý bình luận
+│   ├── search/            # Endpoint tìm kiếm
+│   ├── hashtags/          # Endpoint hashtag
+│   ├── bookmarks/         # Endpoint đánh dấu
+│   ├── blocked/           # Endpoint chặn
+│   ├── reports/           # Endpoint báo cáo
+│   ├── analytics/         # Endpoint phân tích
+│   └── preferences/       # Endpoint tùy chỉnh
 └── page.tsx               # Root redirect
 
 components/
-├── navbar.tsx             # Main navigation with search
-├── notification-bell.tsx   # Notification dropdown menu
-├── search-bar.tsx         # Search bar component
-├── post-card.tsx          # Post display with interactions
-├── create-post.tsx        # Post creation form
-├── post-edit-modal.tsx     # Post editing dialog
-├── report-dialog.tsx       # Report form dialog
-├── infinite-scroll.tsx     # Infinite scroll wrapper
+├── navbar.tsx             # Điều hướng chính với tìm kiếm
+├── notification-bell.tsx   # Menu dropdown thông báo
+├── search-bar.tsx         # Component thanh tìm kiếm
+├── post-card.tsx          # Hiển thị bài viết với tương tác
+├── create-post.tsx        # Form tạo bài viết
+├── post-edit-modal.tsx     # Dialog chỉnh sửa bài viết
+├── report-dialog.tsx       # Dialog form báo cáo
+├── infinite-scroll.tsx     # Wrapper cuộn vô hạn
 ├── skeleton.tsx           # Loading skeleton
 └── ui/                    # shadcn/ui components
 
 hooks/
-├── use-auth.tsx           # Authentication context
-├── use-posts.tsx          # Post management
-├── use-interactions.tsx    # Likes and comments
-├── use-notifications.tsx   # Notification management
-├── use-messages.tsx       # Direct messaging
-├── use-search.tsx         # Search and hashtags
-├── use-preferences.tsx     # User preferences
-└── use-pagination.tsx     # Pagination logic
+├── use-auth.tsx           # Context xác thực
+├── use-posts.tsx          # Quản lý bài viết
+├── use-interactions.tsx    # Likes và bình luận
+├── use-notifications.tsx   # Quản lý thông báo
+├── use-messages.tsx       # Nhắn tin trực tiếp
+├── use-search.tsx         # Tìm kiếm và hashtags
+├── use-preferences.tsx     # Tùy chỉnh người dùng
+└── use-pagination.tsx     # Logic phân trang
 
 lib/
-├── auth.ts                # JWT utilities
-├── db.ts                  # SQLite database layer
-└── schemas.ts             # Zod validation schemas
+├── auth.ts                # Tiện ích JWT
+├── db.ts                  # Layer database SQLite
+└── schemas.ts             # Validation schemas Zod
 ```
 
-## Getting Started
+## Bắt đầu
 
-### Installation
+### Cài đặt
 
-1. Clone the repository
-2. Install dependencies:
+1. Clone repository
+2. Cài đặt dependencies:
 ```bash
 pnpm install
 ```
 
-3. Run the development server:
+3. Chạy server phát triển:
 ```bash
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Mở [http://localhost:3000](http://localhost:3000) trong trình duyệt.
 
-## API Endpoints
+## Tài liệu API
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/logout` - Logout user
-- `GET /api/auth/me` - Get current user
-- `PUT /api/auth/profile` - Update profile
-
-### Posts
-- `GET /api/posts` - Get all posts
-- `POST /api/posts` - Create post
-- `GET /api/posts/[id]` - Get single post
-- `DELETE /api/posts/[id]` - Delete post
-- `POST /api/posts/[id]/likes` - Like post
-- `DELETE /api/posts/[id]/likes` - Unlike post
-- `GET /api/posts/[id]/comments` - Get comments
-- `POST /api/posts/[id]/comments` - Add comment
-
-### Users
-- `GET /api/users/[username]` - Get user profile
-- `GET /api/users/[username]/posts` - Get user's posts
-- `POST /api/users/[username]/follow` - Follow user
-- `DELETE /api/users/[username]/follow` - Unfollow user
-- `GET /api/users/search?q=query` - Search users
-- `POST /api/users/[username]/block` - Block user
-- `DELETE /api/users/[username]/block` - Unblock user
-
-### Notifications
-- `GET /api/notifications` - Get notifications
-- `POST /api/notifications` - Mark all as read
-- `PUT /api/notifications/[id]` - Mark single as read
-
-### Messages
-- `GET /api/messages` - Get conversations
-- `POST /api/messages` - Send message
-- `GET /api/messages/[userId]` - Get conversation with user
-
-### Comments
-- `DELETE /api/comments/[id]` - Delete comment
-
-### Post Management
-- `PUT /api/posts/[id]/edit` - Edit post
-
-### Search & Hashtags
-- `GET /api/search?q=query&type=all` - Search posts and users
-- `GET /api/hashtags?trending=true` - Get trending hashtags
-- `GET /api/hashtags?q=tag` - Search specific hashtag
-
-### User Preferences
-- `GET /api/auth/preferences` - Get user preferences
-- `PUT /api/auth/preferences` - Update preferences (theme, notifications)
-
-### Reports
-- `POST /api/reports` - Submit report (post or user)
+Xem [API.md](./API.md) để biết tài liệu đầy đủ các endpoint RESTful của dự án.
 
 ## Design Tokens
 
-The app uses a custom color system with:
-- **Primary**: Purple (oklch(0.42 0.15 300))
-- **Background**: Light blue-grey (oklch(0.98 0.01 240))
-- **Neutrals**: Grays for secondary elements
-- **Dark Mode**: Complete dark mode support
+Ứng dụng sử dụng hệ thống màu tùy chỉnh:
+- **Primary**: Tím (oklch(0.42 0.15 300))
+- **Background**: Xám nhạt xanh (oklch(0.98 0.01 240))
+- **Neutrals**: Xám cho phần tử phụ
+- **Dark Mode**: Hỗ trợ chế độ tối hoàn chỉnh
 
-## Future Enhancements
+## Các tính năng sắp tới
 
-### Database Integration
-Replace the SQLite database with:
-- Supabase (PostgreSQL with built-in auth)
-- Neon (Serverless PostgreSQL)
-- PlanetScale (MySQL)
+### Database
+- Có thể dễ dàng thay thế SQLite bằng:
+  - Supabase (PostgreSQL với auth tích hợp)
+  - Neon (Serverless PostgreSQL)
+  - PlanetScale (MySQL)
 
-### Advanced Features
-- Real-time WebSocket updates (instead of polling)
-- Email notifications with templates
-- Post sharing/retweets
-- Media storage with Vercel Blob
-- Image optimization with Next.js Image
-- User mentions with autocomplete
-- Advanced recommendation algorithm
-- Video support for posts
-- Live streaming capability
-- User badges and verification
-- Payment integration for premium features
+### Tính năng nâng cao
+- Cập nhật WebSocket thời gian thực (thay vì polling)
+- Thông báo email với templates
+- Chia sẻ bài viết / retweet
+- Lưu trữ media với Vercel Blob
+- Tối ưu hóa ảnh với Next.js Image
+- @mention người dùng với autocomplete
+- Thuật toán đề xuất nâng cao
+- Hỗ trợ video cho bài viết
+- Phát trực tiếp
+- Huy hiệu và xác minh người dùng
+- Tích hợp thanh toán cho tính năng premium
 
-### Performance
-- Image optimization with Next.js Image
+### Hiệu suất
+- Tối ưu hóa ảnh với Next.js Image
 - Incremental Static Regeneration (ISR)
-- Caching strategies
-- Database query optimization
+- Chiến lược caching
+- Tối ưu hóa truy vấn database
 
-## Deployment
+## Triển khai
 
-Deploy to Vercel with one click:
+Triển khai lên Vercel chỉ với một click:
 
-1. Push code to GitHub
-2. Connect repository to Vercel
-3. Set environment variables
-4. Deploy
+1. Push code lên GitHub
+2. Kết nối repository với Vercel
+3. Deploy
 
-Environment variables needed:
-- `JWT_SECRET` - Secret key for JWT signing
+## Bảo mật
 
-## Security Considerations
-
-- Passwords are hashed with bcrypt (10 salt rounds)
-- JWT tokens stored in HttpOnly cookies
-- CSRF protection enabled
-- Input validation with Zod
-- SQL injection prevention (parameterized queries when using database)
-- Rate limiting (recommended for production)
+- Mật khẩu được hash với bcrypt (10 salt rounds)
+- JWT tokens được lưu trong HttpOnly cookies
+- Bảo vệ CSRF
+- Validation input với Zod
+- Phòng chống SQL injection (parameterized queries)
+- Rate limiting (khuyến nghị cho production)
 
 ## License
 

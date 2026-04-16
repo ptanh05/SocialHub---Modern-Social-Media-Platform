@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { usePreferences } from '@/hooks/use-preferences';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, Moon, Sun, Settings, Bell, LogOut, Check } from 'lucide-react';
+import { AlertCircle, Moon, Sun, Settings, Bell, LogOut, Check, Camera, X, Eye, EyeOff } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -20,18 +21,31 @@ export default function SettingsPage() {
   const { user, logout, refreshUser } = useAuth();
   const { preferences, updateTheme, updateNotificationSettings } = usePreferences();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState(user?.name || '');
   const [bio, setBio] = useState(user?.bio || '');
+  const [avatar, setAvatar] = useState(user?.avatar || '');
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [theme, setTheme] = useState(preferences?.theme || 'light');
   const [notifyLikes, setNotifyLikes] = useState(preferences?.notificationSettings.likes ?? true);
   const [notifyComments, setNotifyComments] = useState(preferences?.notificationSettings.comments ?? true);
   const [notifyFollows, setNotifyFollows] = useState(preferences?.notificationSettings.follows ?? true);
   const [notifyMessages, setNotifyMessages] = useState(preferences?.notificationSettings.messages ?? true);
   const [loading, setLoading] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [visible, setVisible] = useState(false);
+
+  // Password change
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 50);
@@ -48,6 +62,70 @@ export default function SettingsPage() {
     }
   }, [preferences]);
 
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setBio(user.bio || '');
+      setAvatar(user.avatar || '');
+    }
+  }, [user]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Định dạng ảnh không hỗ trợ. Chỉ JPEG, PNG, WebP, GIF.');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Ảnh quá lớn. Tối đa 5MB.');
+      return;
+    }
+
+    // Preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setAvatarPreview(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAvatarSave = async () => {
+    if (!avatarPreview) return;
+
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, bio, avatar: avatarPreview }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Cập nhật thất bại');
+      }
+
+      setAvatar(avatarPreview);
+      setAvatarPreview(null);
+      setSuccess('Đổi ảnh đại diện thành công!');
+      await refreshUser();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Cập nhật thất bại');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -58,7 +136,7 @@ export default function SettingsPage() {
       const response = await fetch('/api/auth/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, bio }),
+        body: JSON.stringify({ name, bio, avatar }),
       });
 
       if (!response.ok) {
@@ -71,6 +149,49 @@ export default function SettingsPage() {
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Cập nhật hồ sơ thất bại');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (newPassword !== confirmPassword) {
+      setError('Mật khẩu mới không khớp');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setError('Mật khẩu mới phải từ 8 ký tự');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Đổi mật khẩu thất bại');
+      }
+
+      setSuccess('Đổi mật khẩu thành công!');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPasswordForm(false);
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Đổi mật khẩu thất bại');
     } finally {
       setLoading(false);
     }
@@ -128,6 +249,79 @@ export default function SettingsPage() {
         <p className="text-muted-foreground text-sm">Quản lý tài khoản và tùy chọn của bạn</p>
       </div>
 
+      {error && (
+        <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-sm text-destructive flex items-center gap-2 animate-fade-in">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg text-sm text-green-700 flex items-center gap-2 animate-fade-in">
+          <Check className="w-4 h-4 flex-shrink-0" />
+          {success}
+        </div>
+      )}
+
+      {/* Avatar */}
+      <Card
+        className={`mb-6 border-border/40 transition-all duration-500 ease-out hover-lift ${
+          visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+      >
+        <CardHeader>
+          <CardTitle>Ảnh đại diện</CardTitle>
+          <CardDescription>Thay đổi ảnh đại diện của bạn</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-6">
+            <div className="relative group">
+              <Avatar className="w-24 h-24 ring-2 ring-primary/20">
+                <AvatarImage src={avatarPreview || avatar} alt={name} />
+                <AvatarFallback className="text-2xl">{name?.charAt(0) || '?'}</AvatarFallback>
+              </Avatar>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+              >
+                <Camera className="w-6 h-6 text-white" />
+              </button>
+            </div>
+            <div className="flex-1 space-y-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={handleAvatarUpload}
+                className="hidden"
+              />
+              <p className="text-sm text-muted-foreground">
+                JPG, PNG, GIF hoặc WebP. Tối đa 5MB.
+              </p>
+              {avatarPreview && (
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleAvatarSave} disabled={loading}>
+                    Lưu ảnh
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setAvatarPreview(null);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Profile */}
       <Card
         className={`mb-6 border-border/40 transition-all duration-500 ease-out hover-lift ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
@@ -140,20 +334,6 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleUpdateProfile} className="space-y-4">
-            {error && (
-              <div className="p-3 bg-destructive/10 border border-destructive/30 rounded text-sm text-destructive flex items-center gap-2 animate-fade-in">
-                <AlertCircle className="w-4 h-4" />
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="p-3 bg-green-500/10 border border-green-500/30 rounded text-sm text-green-700 flex items-center gap-2 animate-fade-in">
-                <Check className="w-4 h-4" />
-                {success}
-              </div>
-            )}
-
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Tên</label>
               <Input
@@ -172,7 +352,7 @@ export default function SettingsPage() {
                 onChange={(e) => setBio(e.target.value)}
                 maxLength={150}
                 disabled={loading}
-                className="w-full min-h-20 p-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none transition-all duration-200"
+                className="w-full min-h-20 p-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200 resize-none"
                 placeholder="Giới thiệu về bản thân bạn (tối đa 150 ký tự)"
               />
               <p className={`text-xs transition-colors duration-200 ${bio.length > 130 ? 'text-destructive' : 'text-muted-foreground'}`}>
@@ -207,11 +387,115 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Change Password */}
       <Card
         className={`mb-6 border-border/40 transition-all duration-500 ease-out hover-lift ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}
         style={{ transitionDelay: '100ms' }}
+      >
+        <CardHeader>
+          <CardTitle>Đổi mật khẩu</CardTitle>
+          <CardDescription>Cập nhật mật khẩu để bảo vệ tài khoản</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!showPasswordForm ? (
+            <Button variant="outline" onClick={() => setShowPasswordForm(true)}>
+              Đổi mật khẩu
+            </Button>
+          ) : (
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Mật khẩu hiện tại</label>
+                <div className="relative">
+                  <Input
+                    type={showCurrentPassword ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Nhập mật khẩu hiện tại"
+                    disabled={loading}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Mật khẩu mới</label>
+                <div className="relative">
+                  <Input
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Tối thiểu 8 ký tự"
+                    disabled={loading}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Xác nhận mật khẩu mới</label>
+                <div className="relative">
+                  <Input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Nhập lại mật khẩu mới"
+                    disabled={loading}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button type="submit" disabled={loading}>
+                  {loading ? 'Đang xử lý...' : 'Xác nhận đổi mật khẩu'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowPasswordForm(false);
+                    setCurrentPassword('');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                  }}
+                >
+                  Hủy
+                </Button>
+              </div>
+            </form>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Theme */}
+      <Card
+        className={`mb-6 border-border/40 transition-all duration-500 ease-out hover-lift ${
+          visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+        style={{ transitionDelay: '150ms' }}
       >
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -241,11 +525,12 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Notifications */}
       <Card
         className={`mb-6 border-border/40 transition-all duration-500 ease-out hover-lift ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}
-        style={{ transitionDelay: '150ms' }}
+        style={{ transitionDelay: '200ms' }}
       >
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -255,20 +540,6 @@ export default function SettingsPage() {
           <CardDescription>Chọn loại thông báo bạn muốn nhận</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive/30 rounded text-sm text-destructive flex items-center gap-2 animate-fade-in">
-              <AlertCircle className="w-4 h-4" />
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="p-3 bg-green-500/10 border border-green-500/30 rounded text-sm text-green-700 flex items-center gap-2 animate-fade-in">
-              <Check className="w-4 h-4" />
-              {success}
-            </div>
-          )}
-
           <div className="space-y-3">
             {[
               { checked: notifyLikes, setChecked: setNotifyLikes, label: 'Thông báo khi có người thích bài viết của bạn' },
@@ -308,11 +579,12 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Account */}
       <Card
         className={`border-border/40 transition-all duration-500 ease-out hover-lift ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}
-        style={{ transitionDelay: '200ms' }}
+        style={{ transitionDelay: '250ms' }}
       >
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

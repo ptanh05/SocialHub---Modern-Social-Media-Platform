@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { useUserPosts } from '@/hooks/use-posts';
 import useSWR from 'swr';
@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PostCard } from '@/components/post-card';
 import { Spinner } from '@/components/ui/spinner';
-import { User } from 'lucide-react';
+import { User, Users } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -27,6 +27,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function ProfilePage() {
   const params = useParams();
+  const router = useRouter();
   const username = params.username as string;
   const { user: currentUser } = useAuth();
   const { posts } = useUserPosts(username);
@@ -122,14 +123,20 @@ export default function ProfilePage() {
                   <p className="font-semibold text-foreground">{posts.length}</p>
                   <p className="text-xs text-muted-foreground">Bài viết</p>
                 </div>
-                <div className="text-center">
+                <button
+                  onClick={() => router.push(`/profile/${username}/followers`)}
+                  className="text-center hover:opacity-80 transition-opacity"
+                >
                   <p className="font-semibold text-foreground">{profile.followers}</p>
                   <p className="text-xs text-muted-foreground">Người theo dõi</p>
-                </div>
-                <div className="text-center">
+                </button>
+                <button
+                  onClick={() => router.push(`/profile/${username}/following`)}
+                  className="text-center hover:opacity-80 transition-opacity"
+                >
                   <p className="font-semibold text-foreground">{profile.following}</p>
                   <p className="text-xs text-muted-foreground">Đang theo dõi</p>
-                </div>
+                </button>
               </div>
             </div>
           </div>

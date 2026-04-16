@@ -155,7 +155,7 @@ async function initSchema() {
     .map(s => s.trim())
     .filter(s => s.length > 0);
   for (const stmt of statements) {
-    await db`${stmt}`; // eslint-disable-line @typescript-eslint/no-explicit-any
+    await db.unsafe(stmt);
   }
   schemaInitialized = true;
 }
@@ -222,11 +222,10 @@ export async function createUser(
 
 export async function updateUser(
   id: string,
-  fields: { name?: string; bio?: string; theme?: string },
+  fields: { name?: string; bio?: string; theme?: string; avatar?: string; password?: string },
 ): Promise<User | undefined> {
   await initSchema();
-  if (!fields.name && !fields.bio && !fields.theme) return getUserById(id);
-  if (!fields.name && !fields.bio && !fields.theme) return getUserById(id);
+  if (!fields.name && !fields.bio && !fields.theme && !fields.avatar && !fields.password) return getUserById(id);
 
   // Build SET clause dynamically — column names are controlled by the keys above,
   // values are already validated as strings by the caller.
@@ -235,12 +234,13 @@ export async function updateUser(
   if (fields.name !== undefined)  { sets.push('name = $' + (vals.length + 1)); vals.push(fields.name); }
   if (fields.bio !== undefined)   { sets.push('bio = $' + (vals.length + 1)); vals.push(fields.bio); }
   if (fields.theme !== undefined) { sets.push('theme = $' + (vals.length + 1)); vals.push(fields.theme); }
+  if (fields.avatar !== undefined) { sets.push('avatar = $' + (vals.length + 1)); vals.push(fields.avatar); }
+  if (fields.password !== undefined) { sets.push('password = $' + (vals.length + 1)); vals.push(fields.password); }
   vals.push(id);
 
   const db = getDb();
   const setClause = sets.join(', ');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await db.any(`UPDATE users SET ${setClause} WHERE id = $${vals.length}` as any, vals);
+  await db.query(`UPDATE users SET ${setClause} WHERE id = $${vals.length}`, vals);
   return getUserById(id);
 }
 
@@ -440,6 +440,26 @@ export async function getFollowingCount(userId: string): Promise<number> {
   const db = getDb();
   const result = await db`SELECT COUNT(*) as c FROM follows WHERE follower_id = ${userId}`;
   return Number(result[0]?.c ?? 0);
+}
+
+export async function getFollowers(userId: string): Promise<User[]> {
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT u.* FROM users u
+    INNER JOIN follows f ON f.follower_id = u.id
+    WHERE f.following_id = ${userId}
+    ORDER BY f.created_at DESC`;
+  return rows<User>(result);
+}
+
+export async function getFollowing(userId: string): Promise<User[]> {
+  await initSchema();
+  const db = getDb();
+  const result = await db`SELECT u.* FROM users u
+    INNER JOIN follows f ON f.following_id = u.id
+    WHERE f.follower_id = ${userId}
+    ORDER BY f.created_at DESC`;
+  return rows<User>(result);
 }
 
 // ─── Bookmark ─────────────────────────────────────────────────────────────
@@ -802,7 +822,6 @@ export async function updateUserPreferences(
   }
   vals.push(userId);
   const setClause = sets.join(', ');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await db.any(`UPDATE user_preferences SET ${setClause} WHERE user_id = $${vals.length}` as any, vals);
+  await db.query(`UPDATE user_preferences SET ${setClause} WHERE user_id = $${vals.length}`, vals);
   return (await getUserPreferences(userId))!;
 }

@@ -25,14 +25,9 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const user = await getUserById(payload.userId);
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    const { name, bio, avatar } = validation.data;
 
-    const { name, bio } = validation.data;
-
-    const updated = await updateUser(payload.userId, { name, bio });
+    const updated = await updateUser(payload.userId, { name, bio, avatar });
 
     return NextResponse.json({
       id: updated?.id,

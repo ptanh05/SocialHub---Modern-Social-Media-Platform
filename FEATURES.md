@@ -1,219 +1,220 @@
-# SocialHub - Complete Feature List
+# SocialHub - Danh sách tính năng hoàn chỉnh
 
-## Overview
-SocialHub is a fully-featured social media platform with 14 advanced features implemented across 6 main phases plus 8 advanced feature phases.
+## Tổng quan
 
-## Core Features (Phases 1-6)
+SocialHub là nền tảng mạng xã hội đầy đủ tính năng với 14 tính năng nâng cao được triển khai xuyên suốt 6 giai đoạn chính cùng 8 giai đoạn tính năng nâng cao. Giao diện người dùng hoàn toàn bằng tiếng Việt.
 
-### Phase 1: Authentication System
-- JWT-based authentication with HttpOnly cookies
-- Secure password hashing with bcryptjs (10 salt rounds)
-- User registration with validation
-- User login with email/password
-- Protected routes with middleware
-- Current user retrieval
+## Tính năng Cốt lõi (Giai đoạn 1-6)
 
-### Phase 2: Posts & Feed
-- Create posts with text and optional images
-- View feed with all user posts
-- Delete own posts
-- Relative timestamp display (e.g., "2 hours ago")
-- Post pagination
-- Post author information
-- Real-time updates with SWR
+### Giai đoạn 1: Hệ thống Xác thực
+- Xác thực dựa trên JWT với HttpOnly cookies
+- Hash mật khẩu bảo mật bằng bcryptjs (10 salt rounds)
+- Đăng ký người dùng với validation
+- Đăng nhập người dùng bằng email/password
+- Bảo vệ route bằng middleware
+- Lấy thông tin người dùng hiện tại
 
-### Phase 3: Interactions
-- Like/unlike posts
-- Add comments to posts
-- View comments on posts
-- Delete comments (by author or post owner)
-- Like count display
-- Comment count display
-- Optimistic UI updates
+### Giai đoạn 2: Bài viết & Trang chủ
+- Tạo bài viết với text và ảnh tùy chọn
+- Xem trang chủ với tất cả bài viết
+- Xóa bài viết của mình
+- Hiển thị thời gian tương đối (VD: "2 giờ trước")
+- Phân trang bài viết
+- Thông tin tác giả bài viết
+- Cập nhật thời gian thực với SWR
 
-### Phase 4: Social Features
-- Follow/unfollow users
-- User profile pages with stats
-- Global user search
-- Follower/following counts
-- Explore page with user suggestions
-- User bio display
-- User profile links
+### Giai đoạn 3: Tương tác
+- Thích/bỏ thích bài viết
+- Thêm bình luận vào bài viết
+- Xem bình luận trên bài viết
+- Xóa bình luận (bởi tác giả hoặc chủ bài viết)
+- Hiển thị số lượt thích
+- Hiển thị số bình luận
+- Cập nhật UI optimistic
 
-### Phase 5: Personalization
-- Edit profile (name and bio)
-- Settings page
-- Account management
-- Logout functionality
-- Profile management
+### Giai đoạn 4: Tính năng Xã hội
+- Theo dõi/bỏ theo dõi người dùng
+- Trang hồ sơ người dùng với thống kê
+- Tìm kiếm người dùng toàn cầu
+- Số lượng người theo dõi / đang theo dõi
+- Trang khám phá với gợi ý người dùng
+- Hiển thị bio người dùng
+- Liên kết hồ sơ người dùng
 
-### Phase 6: Polish
-- Modern design with custom color tokens
-- Responsive design (mobile-first)
-- Dark/light theme colors
-- Loading indicators
-- Error handling
-- 404 page
-- Clean navigation
+### Giai đoạn 5: Cá nhân hóa
+- Chỉnh sửa hồ sơ (tên và bio)
+- Trang cài đặt
+- Quản lý tài khoản
+- Chức năng đăng xuất
+- Quản lý hồ sơ
 
-## Advanced Features (Phases 7-14)
+### Giai đoạn 6: Hoàn thiện
+- Thiết kế hiện đại với color tokens tùy chỉnh
+- Thiết kế responsive (mobile-first)
+- Màu giao diện sáng/tối
+- Chỉ báo loading
+- Xử lý lỗi
+- Trang 404
+- Điều hướng sạch sẽ
 
-### Phase 7: Real-time Notifications
-- In-app notification system
-- Notification bell with unread count badge
-- Notification types: likes, comments, follows, messages
-- Mark notifications as read (individual)
-- Mark all notifications as read
-- Notification history
-- Notification dropdown menu
-- Polling-based real-time updates (5-second intervals)
-- Notification persistence
+## Tính năng Nâng cao (Giai đoạn 7-14)
 
-### Phase 8: Direct Messaging
-- One-on-one private messages
-- Conversation list with last message preview
-- View individual conversations
-- Send messages
-- Message read status
-- Message history
-- Real-time message updates (2-3 second polling)
-- Conversation sorting
-- Multiple active conversations
-- Unread message count
+### Giai đoạn 7: Thông báo Thời gian thực
+- Hệ thống thông báo trong ứng dụng
+- Chuông thông báo với badge số chưa đọc
+- Loại thông báo: thích, bình luận, theo dõi, tin nhắn
+- Đánh dấu thông báo đã đọc (từng cái)
+- Đánh dấu tất cả thông báo đã đọc
+- Lịch sử thông báo
+- Menu dropdown thông báo
+- Cập nhật thời gian thực dựa trên polling (5 giây)
+- Lưu trữ thông báo bền vững
 
-### Phase 9: Post Management & Comments
-- Edit posts after creation
-- Preserve post creation time
-- Delete comments by comment author
-- Delete comments by post owner
-- Comment authorization checks
-- Post content updates
-- Edit modal for posts
-- Character count for posts
+### Giai đoạn 8: Nhắn tin Trực tiếp
+- Tin nhắn riêng tư một-một
+- Danh sách cuộc trò chuyện với xem trước tin nhắn cuối
+- Xem từng cuộc trò chuyện
+- Gửi tin nhắn
+- Trạng thái đã đọc tin nhắn
+- Lịch sử tin nhắn
+- Cập nhật tin nhắn thời gian thực (polling 2-3 giây)
+- Sắp xếp cuộc trò chuyện
+- Nhiều cuộc trò chuyện đồng thời
+- Số tin nhắn chưa đọc
 
-### Phase 10: Advanced Search & Hashtags
-- Full-text search for posts
-- Search for users by name/username/bio
-- Hashtag detection in posts
-- Trending hashtags calculation
-- Hashtag pages with related posts
-- Search filtering (all/posts/users)
-- Search results display
-- Autocomplete suggestions
-- Hashtag post count
+### Giai đoạn 9: Quản lý Bài viết & Bình luận
+- Chỉnh sửa bài viết sau khi tạo
+- Giữ nguyên thời gian tạo bài viết
+- Xóa bình luận bởi tác giả bình luận
+- Xóa bình luận bởi chủ bài viết
+- Kiểm tra ủy quyền bình luận
+- Cập nhật nội dung bài viết
+- Modal chỉnh sửa bài viết
+- Đếm ký tự cho bài viết
 
-### Phase 11: Theme & User Preferences
-- Light/dark/system theme toggle
-- Theme persistence
-- User preference storage
-- Notification preferences (likes, comments, follows, messages)
-- Email notification toggle
-- Settings page with all options
-- Real-time theme switching
-- Preference API integration
+### Giai đoạn 10: Tìm kiếm & Hashtags Nâng cao
+- Tìm kiếm toàn văn bản bài viết
+- Tìm kiếm người dùng theo tên/username/bio
+- Phát hiện hashtag trong bài viết
+- Tính toán hashtag thịnh hành
+- Trang hashtag với bài viết liên quan
+- Lọc tìm kiếm (all/posts/users)
+- Hiển thị kết quả tìm kiếm
+- Gợi ý autocomplete
+- Đếm bài viết theo hashtag
 
-### Phase 12: Pagination & Infinite Scroll
-- Infinite scroll component
-- Intersection Observer API
-- Pagination hook
-- Load more on scroll
-- Loading indicators
-- Page-based pagination
-- Auto-load configuration
-- Sentinel element triggering
+### Giai đoạn 11: Giao diện & Tùy chỉnh Người dùng
+- Chuyển giao diện sáng/tối/hệ thống
+- Lưu giao diện vào database
+- Lưu trữ tùy chỉnh người dùng
+- Cài đặt thông báo (thích, bình luận, theo dõi, tin nhắn)
+- Nút thông báo email
+- Trang cài đặt với tất cả tùy chọn
+- Chuyển giao diện thời gian thực
+- Tích hợp API tùy chỉnh
 
-### Phase 13: Bookmarks, Blocking & Reports
-- Save/bookmark posts for later
-- Saved posts page
-- Block users
-- View blocked users list
-- Unblock users
-- Report posts with reasons
-- Report users with reasons
-- Report descriptions
-- Report status tracking (pending/reviewed/dismissed/action_taken)
-- Report reasons (spam, harassment, abuse, inappropriate, misinformation, other)
+### Giai đoạn 12: Phân trang & Cuộn Vô hạn
+- Component cuộn vô hạn
+- API Intersection Observer
+- Hook phân trang
+- Tải thêm khi cuộn
+- Chỉ báo loading
+- Phân trang dựa trên page
+- Cấu hình auto-load
+- Element sentinel kích hoạt tải
 
-### Phase 14: Activity Feed & Analytics
-- User activity feed grouped by date
-- Activity grouped into sections (today, this week, older)
-- Engagement metrics dashboard
-- Total likes counter
-- Total comments counter
-- Follower count display
-- Engagement charts (Recharts)
-- Weekly engagement data
-- Top posts performance
-- Post summary cards
+### Giai đoạn 13: Đánh dấu, Chặn & Báo cáo
+- Lưu/đánh dấu bài viết để xem sau
+- Trang bài viết đã lưu
+- Chặn người dùng
+- Xem danh sách người dùng bị chặn
+- Bỏ chặn người dùng
+- Báo cáo bài viết kèm lý do
+- Báo cáo người dùng kèm lý do
+- Mô tả báo cáo
+- Theo dõi trạng thái báo cáo (pending/reviewed/dismissed/action_taken)
+- Lý do báo cáo (spam, harassment, abuse, inappropriate, misinformation, other)
 
-## Technical Implementation
+### Giai đoạn 14: Nguồn cấp Hoạt động & Phân tích
+- Nguồn cấp hoạt động người dùng theo ngày
+- Hoạt động nhóm theo phần (hôm nay, tuần này, cũ hơn)
+- Dashboard số liệu tương tác
+- Bộ đếm tổng lượt thích
+- Bộ đếm tổng bình luận
+- Hiển thị số người theo dõi
+- Biểu đồ tương tác (Recharts)
+- Dữ liệu tương tác theo tuần
+- Hiệu suất bài viết hàng đầu
+- Card tóm tắt bài viết
 
-### Database Functions (lib/db.ts)
-- 50+ database functions covering all features via Neon PostgreSQL
-- User management (create, get, search)
-- Post management (create, read, update, delete)
-- Interaction management (likes, comments)
-- Follow/unfollow logic
-- Notification management
-- Message management
-- Blocking logic
-- Report management
-- Hashtag management
-- User preferences
+## Triển khai Kỹ thuật
+
+### Hàm Database (lib/db.ts)
+- 50+ hàm database bao phủ tất cả tính năng qua SQLite (`better-sqlite3`)
+- Quản lý người dùng (tạo, lấy, tìm kiếm)
+- Quản lý bài viết (tạo, đọc, cập nhật, xóa)
+- Quản lý tương tác (thích, bình luận)
+- Logic theo dõi/bỏ theo dõi
+- Quản lý thông báo
+- Quản lý tin nhắn
+- Logic chặn
+- Quản lý báo cáo
+- Quản lý hashtag
+- Tùy chỉnh người dùng
 
 ### API Routes
-- 20+ API endpoints
-- POST/GET/PUT/DELETE operations
-- Proper HTTP status codes
-- Zod validation on all inputs
-- Authentication checks
-- Authorization checks
-- Error handling
+- 20+ endpoint API
+- Các operation POST/GET/PUT/DELETE
+- HTTP status codes đúng
+- Validation input bằng Zod trên tất cả input
+- Kiểm tra xác thực
+- Kiểm tra ủy quyền
+- Xử lý lỗi
 - JSON responses
 
 ### React Hooks
-- 8 custom hooks for data management
-- SWR for client-side caching
-- Polling for real-time data
-- Mutation functions
-- Loading/error states
+- 8 custom hooks để quản lý dữ liệu
+- SWR cho caching phía client
+- Polling cho dữ liệu thời gian thực
+- Hàm mutation
+- Trạng thái loading/error
 - Cache invalidation
 
 ### UI Components
-- 15+ custom components
-- Reusable post cards
-- Modal dialogs for editing
+- 15+ component tùy chỉnh
+- Post cards có thể tái sử dụng
+- Modal dialog để chỉnh sửa
 - Notification bell dropdown
-- Search bar with submission
+- Search bar với submission
 - Conversation views
-- Analytics charts
+- Biểu đồ phân tích
 - Activity feed displays
 - Report dialogs
 
 ### Pages (18 total)
-- 6 authentication pages
-- 12 application pages
+- 6 trang xác thực
+- 12 trang ứng dụng
 - Protected route patterns
-- Dynamic routing with parameters
-- Server and client components
+- Dynamic routing với parameters
+- Server và client components
 
-## Design System
+## Hệ thống Thiết kế
 
 ### Color Scheme
-- Primary: Purple (oklch(0.42 0.15 300))
-- Background: Light (oklch(0.98 0.01 240))
-- Dark Mode: Full support with oklch values
-- Neutrals: Grays for secondary elements
-- 5-color palette maximum
+- Primary: Tím (oklch(0.42 0.15 300))
+- Background: Sáng (oklch(0.98 0.01 240))
+- Dark Mode: Hỗ trợ đầy đủ với oklch values
+- Neutrals: Xám cho phần tử phụ
+- 5-color palette tối đa
 
 ### Typography
-- Sans serif for headers and body
-- Monospace for code
+- Sans serif cho headers và body
+- Monospace cho code
 - Font sizes: 10px - 32px range
 - Line heights: 1.4-1.6
 
 ### Components Library
-- shadcn/ui with Radix UI primitives
+- shadcn/ui với Radix UI primitives
 - Pre-built components:
   - Button, Input, Textarea
   - Card, Dialog, Dropdown
@@ -224,115 +225,104 @@ SocialHub is a fully-featured social media platform with 14 advanced features im
 
 ## Database Schema
 
-### Tables (Interfaces)
-1. User - User profile data
-2. Post - Post content
-3. Like - Post likes
-4. Comment - Post comments
-5. Follow - User follows
-6. Bookmark - Saved posts
-7. Notification - User notifications
-8. Message - Direct messages
-9. Block - User blocks
-10. Report - Content reports
-11. Hashtag - Hashtag tracking
-12. UserPreferences - User settings
+### Tables (12 bảng trong SQLite)
+1. `users` — Dữ liệu hồ sơ người dùng
+2. `posts` — Nội dung bài viết
+3. `likes` — Lượt thích bài viết
+4. `comments` — Bình luận bài viết
+5. `follows` — Quan hệ theo dõi
+6. `bookmarks` — Bài viết đã lưu
+7. `notifications` — Thông báo người dùng
+8. `messages` — Tin nhắn trực tiếp
+9. `blocks` — User đã chặn
+10. `reports` — Báo cáo nội dung
+11. `hashtags` — Hashtag tracking
+12. `user_preferences` — Cài đặt người dùng
 
-## Security Features
+## Tính năng Bảo mật
 
-- Password hashing with bcryptjs
-- JWT token authentication
-- HttpOnly cookie storage
-- Authorization checks on protected actions
-- Input validation with Zod
-- CSRF protection ready
-- Rate limiting ready for production
-- SQL injection prevention (parameterized when using real DB)
+- Hash mật khẩu bằng bcryptjs
+- Xác thực JWT token
+- Lưu trữ HttpOnly cookie
+- Kiểm tra ủy quyền trên các action được bảo vệ
+- Validation input với Zod
+- Phòng chống SQL injection (parameterized queries)
+- CSRF protection
 
-## Performance Optimizations
+## Tối ưu Hiệu suất
 
 - SWR caching strategy
 - Optimistic UI updates
-- Polling instead of WebSockets (simple implementation)
-- Image lazy loading
-- Component code splitting
-- Efficient re-renders with React optimization
+- Polling thay vì WebSockets (implement đơn giản)
+- Lazy loading ảnh
+- Code splitting component
+- Efficient re-renders với React optimization
 - Selector pagination
 
-## Scalability Notes
+## Ghi chú Mở rộng
 
-The PostgreSQL (Neon) database can be easily replaced with:
+Database SQLite có thể dễ dàng thay thế bằng:
 - **Supabase**: PostgreSQL + Auth + Real-time
 - **Neon**: Serverless PostgreSQL
 - **PlanetScale**: MySQL serverless
 - **AWS**: RDS + Cognito + DynamoDB
 
-To scale:
-1. Replace mock database functions with actual database queries
-2. Add database migration system
-3. Implement proper pagination with cursors
-4. Add caching layer (Redis)
-5. Implement WebSocket for real-time
-6. Add message queue for notifications
-7. Implement CDN for media storage
+Để mở rộng:
+1. Thay hàm database bằng truy vấn thực
+2. Thêm hệ thống migration
+3. Triển khai pagination đúng với cursors
+4. Thêm caching layer (Redis)
+5. Triển khai WebSocket cho thời gian thực
+6. Thêm message queue cho notifications
+7. Triển khai CDN cho media storage
 
-## Development Notes
+## Ghi chú Phát triển
 
-### File Organization
-- API routes organized by feature
-- Components grouped by functionality
-- Hooks for data management
-- Schemas for validation
-- Database functions in lib/db.ts
-- Utilities in lib/
+### Tổ chức File
+- API routes được tổ chức theo tính năng
+- Components được nhóm theo chức năng
+- Hooks cho data management
+- Schemas cho validation
+- Database functions trong lib/db.ts
+- Utilities trong lib/
 
 ### Code Patterns
 - Component composition
-- Custom hooks for logic
-- SWR for data fetching
-- Zod for validation
+- Custom hooks cho logic
+- SWR cho data fetching
+- Zod cho validation
 - Next.js API routes
 - Protected middleware
 - Error boundaries
 
-### Best Practices Implemented
-- No localStorage usage (all data server-side)
-- Proper error handling
-- Loading states
+### Best Practices
+- Không dùng localStorage (tất cả dữ liệu phía server)
+- Xử lý lỗi đúng cách
+- Trạng thái loading
 - Optimistic updates
-- Authorization checks
-- Input validation
+- Kiểm tra ủy quyền
+- Validation input
 - TypeScript types
 - Component reusability
 
-## Future Roadmap
+## Roadmap Tương lai
 
-### High Priority
-- WebSocket real-time updates
-- Email notifications
-- Media storage (Vercel Blob)
-- Image optimization
+### Ưu tiên cao
+- Cập nhật WebSocket thời gian thực
+- Thông báo email
+- Lưu trữ media (Vercel Blob)
+- Tối ưu hóa ảnh
 
-### Medium Priority
-- User mentions with autocomplete
-- Post sharing/retweets
-- Advanced feed algorithm
-- User badges and verification
+### Ưu tiên trung bình
+- @mention người dùng với autocomplete
+- Chia sẻ bài viết / retweet
+- Thuật toán feed nâng cao
+- Huy hiệu và xác minh người dùng
 
 ### Nice to Have
-- Video support
+- Hỗ trợ video
 - Live streaming
-- Payment integration
-- Premium features
-- Recommendations algorithm
-- Analytics exports
-
-## Getting Started
-
-1. Clone the repository
-2. Install dependencies: `pnpm install`
-3. Run dev server: `pnpm dev`
-4. Register a new account to get started
-5. Explore all features
-
-All features are fully functional and ready to use!
+- Tích hợp thanh toán
+- Tính năng premium
+- Thuật toán đề xuất
+- Export phân tích

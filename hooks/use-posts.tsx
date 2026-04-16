@@ -1,6 +1,6 @@
 'use client';
 
-import useSWR from 'swr';
+import useSWR, { useSWRInfinite } from 'swr';
 
 interface Post {
   id: string;
@@ -9,12 +9,29 @@ interface Post {
   image?: string;
   createdAt: string;
   updatedAt: string;
+  author?: {
+    id: string;
+    name: string;
+    username: string;
+    avatar: string;
+  };
 }
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export function usePosts() {
-  const { data: posts = [], isLoading, error, mutate } = useSWR('/api/posts', fetcher);
+  const { data, isLoading, error, mutate } = useSWRInfinite(
+    (pageIndex) => `/api/posts?page=${pageIndex + 1}`,
+    fetcher,
+    {
+      revalidateFirstPage: false,
+      revalidateOnFocus: false,
+    }
+  );
+
+  const posts: Post[] = data ? data.flatMap((page: any) => page.posts || []) : [];
+  const hasMore = data ? data[data.length - 1]?.pagination?.hasMore : false;
+  const isLoadingMore = data && typeof data[data.length - 1] === 'undefined';
 
   const createPost = async (content: string, image?: string) => {
     const response = await fetch('/api/posts', {
@@ -24,12 +41,12 @@ export function usePosts() {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to create post');
+      const err = await response.json();
+      throw new Error(err.error || 'Failed to create post');
     }
 
     const newPost = await response.json();
-    await mutate([newPost, ...posts], false);
+    await mutate();
     return newPost;
   };
 
@@ -39,19 +56,18 @@ export function usePosts() {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to delete post');
+      const err = await response.json();
+      throw new Error(err.error || 'Failed to delete post');
     }
 
-    await mutate(
-      posts.filter((post: Post) => post.id !== id),
-      false
-    );
+    await mutate();
   };
 
   return {
     posts,
     isLoading,
+    isLoadingMore,
+    hasMore,
     error,
     createPost,
     deletePost,
