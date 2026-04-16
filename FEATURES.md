@@ -12,7 +12,6 @@ SocialHub is a fully-featured social media platform with 14 advanced features im
 - User login with email/password
 - Protected routes with middleware
 - Current user retrieval
-- Demo account access
 
 ### Phase 2: Posts & Feed
 - Create posts with text and optional images
@@ -150,7 +149,7 @@ SocialHub is a fully-featured social media platform with 14 advanced features im
 ## Technical Implementation
 
 ### Database Functions (lib/db.ts)
-- 50+ database functions covering all features
+- 50+ database functions covering all features via Neon PostgreSQL
 - User management (create, get, search)
 - Post management (create, read, update, delete)
 - Interaction management (likes, comments)
@@ -262,7 +261,7 @@ SocialHub is a fully-featured social media platform with 14 advanced features im
 
 ## Scalability Notes
 
-The mock database can be easily replaced with:
+The PostgreSQL (Neon) database can be easily replaced with:
 - **Supabase**: PostgreSQL + Auth + Real-time
 - **Neon**: Serverless PostgreSQL
 - **PlanetScale**: MySQL serverless
@@ -276,17 +275,6 @@ To scale:
 5. Implement WebSocket for real-time
 6. Add message queue for notifications
 7. Implement CDN for media storage
-
-## Testing Endpoints
-
-### Demo Account
-- Email: demo@example.com
-- Password: demo123
-
-### Sample Data
-- 1 demo user with sample post
-- Can create additional users via registration
-- Sample follows, likes, and comments in database
 
 ## Development Notes
 
@@ -344,7 +332,7 @@ To scale:
 1. Clone the repository
 2. Install dependencies: `pnpm install`
 3. Run dev server: `pnpm dev`
-4. Login with demo@example.com / demo123
+4. Register a new account to get started
 5. Explore all features
 
 All features are fully functional and ready to use!

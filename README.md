@@ -10,7 +10,6 @@ A full-featured social media application built with Next.js, featuring user auth
 - HttpOnly cookie storage
 - User registration and login
 - Protected routes with middleware
-- Demo account: `demo@example.com` / `demo123`
 
 ### Phase 2: Feed & Posts ✓
 - Create, read, and delete posts
@@ -114,7 +113,7 @@ A full-featured social media application built with Next.js, featuring user auth
 - **Validation**: Zod
 - **Icons**: Lucide React
 - **Charts**: Recharts for analytics
-- **Database**: Mock in-memory (easily replaceable with Supabase, Neon, etc.)
+- **Database**: PostgreSQL via Neon (serverless, edge-ready)
 - **Real-time**: Polling for notifications and messages (WebSocket ready)
 
 ## Project Structure
@@ -172,7 +171,7 @@ hooks/
 
 lib/
 ├── auth.ts                # JWT utilities
-├── db.ts                  # Mock database
+├── db.ts                  # SQLite database layer
 └── schemas.ts             # Zod validation schemas
 ```
 
@@ -192,11 +191,6 @@ pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### Demo Account
-
-- **Email**: `demo@example.com`
-- **Password**: `demo123`
 
 ## API Endpoints
 
@@ -265,7 +259,7 @@ The app uses a custom color system with:
 ## Future Enhancements
 
 ### Database Integration
-Replace the mock database with:
+Replace the SQLite database with:
 - Supabase (PostgreSQL with built-in auth)
 - Neon (Serverless PostgreSQL)
 - PlanetScale (MySQL)
