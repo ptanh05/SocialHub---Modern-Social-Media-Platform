@@ -11,31 +11,45 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 export default function AnalyticsPage() {
   const { user } = useAuth();
 
-  const { data } = useSWR(user ? '/api/analytics' : null, fetcher);
+  const { data, isLoading } = useSWR(user ? '/api/analytics' : null, fetcher);
 
   if (!user) return null;
 
-  if (!data) {
+  if (isLoading) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-foreground mb-8">Analytics</h1>
-        <p className="text-muted-foreground">Loading...</p>
+        <div className="animate-pulse space-y-8">
+          <div className="h-8 bg-muted rounded w-48" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-24 bg-muted rounded" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
-  const { stats, weeklyData } = data;
-  const totalLikes = stats.likeCount;
-  const totalComments = stats.commentCount;
-  const followerCount = stats.followerCount;
-  const postCount = stats.postCount;
+  const stats = data?.stats || { postCount: 0, likeCount: 0, commentCount: 0, followerCount: 0 };
+  const weeklyData = data?.weeklyData || [];
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-foreground mb-8">Analytics</h1>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              Total Posts
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{stats.postCount}</p>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -44,10 +58,7 @@ export default function AnalyticsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{totalLikes}</p>
-            <p className="text-xs text-muted-foreground mt-2">
-              +{Math.floor(totalLikes * 0.4)} this month
-            </p>
+            <p className="text-2xl font-bold">{stats.likeCount}</p>
           </CardContent>
         </Card>
 
@@ -59,10 +70,7 @@ export default function AnalyticsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{totalComments}</p>
-            <p className="text-xs text-muted-foreground mt-2">
-              +{Math.floor(totalComments * 0.4)} this month
-            </p>
+            <p className="text-2xl font-bold">{stats.commentCount}</p>
           </CardContent>
         </Card>
 
@@ -74,28 +82,11 @@ export default function AnalyticsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{followerCount}</p>
-            <p className="text-xs text-muted-foreground mt-2">
-              +{Math.max(1, Math.floor(followerCount * 0.2))} this month
-            </p>
+            <p className="text-2xl font-bold">{stats.followerCount}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Posts summary card */}
-      <Card className="mb-8">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <FileText className="w-4 h-4 text-green-500" />
-            Total Posts
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-2xl font-bold">{postCount}</p>
-        </CardContent>
-      </Card>
-
-      {/* Chart */}
       <Card>
         <CardHeader>
           <CardTitle>Engagement Over Time</CardTitle>

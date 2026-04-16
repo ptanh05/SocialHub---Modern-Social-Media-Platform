@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { searchUsers } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,13 +9,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([]);
     }
 
-    const db = await getDb();
-    const likePattern = `%${query}%`;
-    const rows = db.prepare(
-      'SELECT * FROM users WHERE username LIKE ? OR name LIKE ? LIMIT 10'
-    ).all(likePattern, likePattern) as Record<string, unknown>[];
-
-    const results = rows.map((user) => ({
+    const users = await searchUsers(query);
+    const results = users.map((user) => ({
       id: user.id,
       name: user.name,
       username: user.username,
