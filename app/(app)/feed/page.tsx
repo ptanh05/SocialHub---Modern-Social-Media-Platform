@@ -19,18 +19,17 @@ export default function FeedPage() {
   }, []);
 
   const handleDeletePost = async (id: string) => {
-    if (confirm('Are you sure you want to delete this post?')) {
+    if (confirm('Bạn có chắc muốn xóa bài viết này?')) {
       try {
         await deletePost(id);
       } catch (error) {
-        console.error('Failed to delete post:', error);
+        console.error('Xóa bài thất bại:', error);
       }
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
-      {/* Header */}
       <div
         className={`mb-6 transition-all duration-500 ease-out ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
@@ -40,10 +39,10 @@ export default function FeedPage() {
           <div className="p-2 rounded-full bg-primary/10">
             <Newspaper className="w-6 h-6 text-primary" />
           </div>
-          Your Feed
+          Bảng tin của bạn
         </h1>
         <p className="text-muted-foreground text-sm">
-          {posts.length > 0 ? `${posts.length} ${posts.length === 1 ? 'post' : 'posts'}` : 'See what&apos;s happening'}
+          {posts.length > 0 ? `${posts.length} bài viết` : 'Xem những gì đang xảy ra'}
         </p>
       </div>
 
@@ -59,15 +58,15 @@ export default function FeedPage() {
             visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`} style={{ transitionDelay: '150ms' }}>
             <Newspaper className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
-            <p className="text-muted-foreground font-medium">No posts yet</p>
-            <p className="text-xs text-muted-foreground mt-1">Be the first to share something!</p>
+            <p className="text-muted-foreground font-medium">Chưa có bài viết nào</p>
+            <p className="text-xs text-muted-foreground mt-1">Hãy chia sẻ điều gì đó trước tiên!</p>
           </div>
         ) : (
           posts.map((post: any, index: number) => (
             <PostCard
               key={post.id}
               post={post}
-              author={post.author || { name: 'Unknown', username: 'unknown', avatar: '' }}
+              author={post.author || { name: 'Không rõ', username: 'unknown', avatar: '' }}
               onDelete={handleDeletePost}
               isOwner={post.userId === user?.id}
               animationDelay={100 + index * 80}

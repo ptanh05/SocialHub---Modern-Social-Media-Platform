@@ -28,13 +28,11 @@ export default function ExplorePage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      {/* Header */}
       <div className="mb-8 animate-fade-in">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Explore</h1>
-        <p className="text-muted-foreground text-sm">Discover people and content</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Khám phá</h1>
+        <p className="text-muted-foreground text-sm">Tìm kiếm người dùng và nội dung</p>
       </div>
 
-      {/* Search Bar */}
       <div className="relative mb-8 animate-fade-in-up">
         <Search
           className={`absolute left-3 top-3 w-5 h-5 transition-colors duration-200 ${
@@ -43,7 +41,7 @@ export default function ExplorePage() {
         />
         <Input
           type="text"
-          placeholder="Search users..."
+          placeholder="Tìm kiếm người dùng..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => setInputFocused(true)}
@@ -54,11 +52,10 @@ export default function ExplorePage() {
         />
       </div>
 
-      {/* Results */}
       {searchQuery && results.length === 0 ? (
         <div className="animate-fade-in text-center py-12">
-          <p className="text-muted-foreground">No users found</p>
-          <p className="text-xs text-muted-foreground mt-1">Try a different search term</p>
+          <p className="text-muted-foreground">Không tìm thấy người dùng</p>
+          <p className="text-xs text-muted-foreground mt-1">Thử từ khóa khác</p>
         </div>
       ) : results.length > 0 ? (
         <div className="space-y-3">
@@ -97,8 +94,8 @@ export default function ExplorePage() {
           <div className="mb-4">
             <Search className="w-12 h-12 mx-auto text-muted-foreground/30" />
           </div>
-          <p className="text-muted-foreground">Search for users to get started</p>
-          <p className="text-xs text-muted-foreground mt-1">Find people by name or username</p>
+          <p className="text-muted-foreground">Tìm kiếm người dùng để bắt đầu</p>
+          <p className="text-xs text-muted-foreground mt-1">Tìm theo tên hoặc tên đăng nhập</p>
         </Card>
       )}
     </div>

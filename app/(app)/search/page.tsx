@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation';
 import { useSearch, useTrendingHashtags } from '@/hooks/use-search';
 import { PostCard } from '@/components/post-card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,7 +24,6 @@ export default function SearchPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Header */}
       {query && (
         <div
           className={`mb-8 transition-all duration-500 ease-out ${
@@ -34,9 +32,9 @@ export default function SearchPage() {
         >
           <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-2">
             <Search className="w-6 h-6 text-primary" />
-            Search Results
+            Kết quả tìm kiếm
           </h1>
-          <p className="text-muted-foreground">Results for "{query}"</p>
+          <p className="text-muted-foreground">Kết quả cho "{query}"</p>
         </div>
       )}
 
@@ -49,12 +47,11 @@ export default function SearchPage() {
           >
             <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-2">
               <Search className="w-7 h-7 text-primary" />
-              Explore
+              Khám phá
             </h1>
-            <p className="text-muted-foreground">Discover trending topics and people</p>
+            <p className="text-muted-foreground">Khám phá các chủ đề và người dùng đang thịnh hành</p>
           </div>
 
-          {/* Trending Hashtags */}
           <Card
             className={`mb-8 transition-all duration-500 ease-out ${
               visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
@@ -64,7 +61,7 @@ export default function SearchPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Hash className="w-5 h-5 text-primary" />
-                Trending Hashtags
+                Hashtag thịnh hành
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -77,7 +74,7 @@ export default function SearchPage() {
                     style={{ animationDelay: `${150 + index * 50}ms` }}
                   >
                     <p className="font-semibold text-primary">#{tag.tag}</p>
-                    <p className="text-xs text-muted-foreground">{tag.count} posts</p>
+                    <p className="text-xs text-muted-foreground">{tag.count} bài viết</p>
                   </Link>
                 ))}
               </div>
@@ -87,24 +84,23 @@ export default function SearchPage() {
       )}
 
       {query && isLoading && (
-        <div className="text-center py-12 text-muted-foreground animate-pulse">Searching...</div>
+        <div className="text-center py-12 text-muted-foreground animate-pulse">Đang tìm kiếm...</div>
       )}
 
       {query && results && (
         <Tabs defaultValue="all" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="all" className="text-xs sm:text-sm">
-              All ({(results.posts?.length || 0) + (results.users?.length || 0)})
+              Tất cả ({(results.posts?.length || 0) + (results.users?.length || 0)})
             </TabsTrigger>
             <TabsTrigger value="posts" className="text-xs sm:text-sm">
-              Posts ({results.posts?.length || 0})
+              Bài viết ({results.posts?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="users" className="text-xs sm:text-sm">
-              Users ({results.users?.length || 0})
+              Người dùng ({results.users?.length || 0})
             </TabsTrigger>
           </TabsList>
 
-          {/* All Results */}
           <TabsContent value="all" className="space-y-6 mt-6">
             {(results.users?.length || 0) > 0 && (
               <div
@@ -117,7 +113,7 @@ export default function SearchPage() {
                   <Avatar className="h-5 w-5">
                     <AvatarFallback className="text-xs">U</AvatarFallback>
                   </Avatar>
-                  Users
+                  Người dùng
                 </h2>
                 <div className="space-y-2">
                   {results.users?.map((user: any, index: number) => (
@@ -150,14 +146,14 @@ export default function SearchPage() {
               >
                 <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
                   <Search className="w-4 h-4" />
-                  Posts
+                  Bài viết
                 </h2>
                 <div className="space-y-4">
                   {results.posts?.map((post: any, index: number) => (
                     <PostCard
                       key={post.id}
                       post={post}
-                      author={{ name: 'User', username: 'user', avatar: '' }}
+                      author={{ name: 'Người dùng', username: 'user', avatar: '' }}
                       animationDelay={index * 60}
                     />
                   ))}
@@ -167,28 +163,26 @@ export default function SearchPage() {
 
             {(!results.posts?.length && !results.users?.length) && (
               <div className="text-center py-12 text-muted-foreground animate-fade-in">
-                No results found
+                Không tìm thấy kết quả
               </div>
             )}
           </TabsContent>
 
-          {/* Posts Only */}
           <TabsContent value="posts" className="space-y-4 mt-6">
             {results.posts?.length ? (
               results.posts.map((post: any, index: number) => (
                 <PostCard
                   key={post.id}
                   post={post}
-                  author={{ name: 'User', username: 'user', avatar: '' }}
+                  author={{ name: 'Người dùng', username: 'user', avatar: '' }}
                   animationDelay={index * 60}
                 />
               ))
             ) : (
-              <div className="text-center py-12 text-muted-foreground animate-fade-in">No posts found</div>
+              <div className="text-center py-12 text-muted-foreground animate-fade-in">Không có bài viết nào</div>
             )}
           </TabsContent>
 
-          {/* Users Only */}
           <TabsContent value="users" className="space-y-2 mt-6">
             {results.users?.length ? (
               results.users.map((user: any, index: number) => (
@@ -209,7 +203,7 @@ export default function SearchPage() {
                 </Link>
               ))
             ) : (
-              <div className="text-center py-12 text-muted-foreground animate-fade-in">No users found</div>
+              <div className="text-center py-12 text-muted-foreground animate-fade-in">Không tìm thấy người dùng</div>
             )}
           </TabsContent>
         </Tabs>
