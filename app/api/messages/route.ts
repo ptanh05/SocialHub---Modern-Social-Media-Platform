@@ -48,6 +48,24 @@ export async function POST(request: NextRequest) {
 
     const message = await createMessage(payload.userId, receiverId, content);
 
+    // Gửi email notification nếu người nhận có bật email_notifications
+    const prefs = await getUserPreferences(receiverId);
+    if (prefs?.emailNotifications && prefs?.notificationSettings.messages !== false) {
+      const [sender, recipient] = await Promise.all([
+        getUserById(payload.userId),
+        getUserById(receiverId),
+      ]);
+      if (sender && recipient) {
+        const emailContent = notifyNewMessageEmail(
+          recipient.name,
+          sender.name,
+          sender.username,
+          content
+        );
+        await sendEmail({ to: recipient.email, ...emailContent });
+      }
+    }
+
     return NextResponse.json(message, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

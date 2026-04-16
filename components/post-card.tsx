@@ -11,7 +11,7 @@ import { useReposts } from '@/hooks/use-reposts';
 import { useMentions } from '@/hooks/use-mentions';
 import { useBookmarkStatus } from '@/hooks/use-bookmarks';
 import { MentionDropdown } from '@/components/mention-dropdown';
-import { Heart, MessageCircle, Share2, Trash2, Repeat2, Bookmark } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Trash2, Repeat2, Bookmark, BadgeCheck } from 'lucide-react';
 import Image from 'next/image';
 
 interface Post {
@@ -29,10 +29,20 @@ interface PostCardProps {
     name: string;
     username: string;
     avatar: string;
+    isVerified?: boolean;
+    badge?: string;
   };
   onDelete?: (id: string) => void;
   isOwner?: boolean;
   animationDelay?: number;
+}
+
+function getBadgeEmoji(badge: string) {
+  const map: Record<string, string> = {
+    creator: '✨', early_adopter: '🚀', contributor: '🏆',
+    verified: '✅', staff: '💼',
+  };
+  return map[badge] || '';
 }
 
 export function PostCard({ post, author, onDelete, isOwner, animationDelay = 0 }: PostCardProps) {

@@ -7,6 +7,7 @@ import {
   getUserById,
   createNotification,
   getUserPreferences,
+  pushSSEEvent,
 } from '@/lib/db';
 import { commentSchema } from '@/lib/schemas';
 import { sendEmail, notifyNewCommentEmail } from '@/lib/email';
