@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import { createMessage, getConversations, getUnreadMessagesCount, getUserById, getUserPreferences } from '@/lib/db';
+import { createMessage, getConversations, getUnreadMessagesCount, getUserById, getUserPreferences, pushSSEEvent } from '@/lib/db';
 import { z } from 'zod';
 import { sendEmail, notifyNewMessageEmail } from '@/lib/email';
 
@@ -47,6 +47,13 @@ export async function POST(request: NextRequest) {
     const { receiverId, content } = createMessageSchema.parse(body);
 
     const message = await createMessage(payload.userId, receiverId, content);
+
+    // Push real-time event to the recipient
+    await pushSSEEvent(receiverId, 'message:new', {
+      messageId: message.id,
+      senderId: payload.userId,
+      content,
+    });
 
     // Gửi email notification nếu người nhận có bật email_notifications
     const prefs = await getUserPreferences(receiverId);
