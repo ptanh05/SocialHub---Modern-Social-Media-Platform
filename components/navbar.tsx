@@ -7,7 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Home, Compass, Settings, LogOut, Search, Mail, Menu, X } from 'lucide-react';
+import { Home, Compass, Settings, LogOut, Search, Mail, Menu, X, BadgeCheck } from 'lucide-react';
 import { NotificationBell } from '@/components/notification-bell';
 import { SearchBar } from '@/components/search-bar';
 

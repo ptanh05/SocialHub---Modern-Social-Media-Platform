@@ -98,6 +98,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           id,
           content.length > 50 ? content.substring(0, 50) + '...' : content
         );
+        await pushSSEEvent(post.userId, 'notification:comment', {
+          postId: id,
+          actorId: payload.userId,
+          commentPreview: content.length > 50 ? content.substring(0, 50) + '...' : content,
+        });
 
         // Gửi email notification nếu người nhận có bật email_notifications
         if (prefs?.emailNotifications && author) {

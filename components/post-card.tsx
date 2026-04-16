@@ -98,7 +98,15 @@ function PostCardComponent({ post, author, onDelete, isOwner, animationDelay }: 
                 <AvatarFallback>{author.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-semibold text-sm text-foreground">{author.name}</p>
+                <p className="font-semibold text-sm text-foreground flex items-center gap-1">
+                  {author.name}
+                  {author.isVerified && (
+                    <BadgeCheck className="w-4 h-4 text-blue-500" />
+                  )}
+                  {author.badge && (
+                    <span className="text-xs" title={author.badge}>{getBadgeEmoji(author.badge)}</span>
+                  )}
+                </p>
                 <p className="text-xs text-muted-foreground">@{author.username}</p>
               </div>
             </Link>
