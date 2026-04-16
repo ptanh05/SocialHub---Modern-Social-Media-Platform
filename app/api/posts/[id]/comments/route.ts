@@ -97,6 +97,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           id,
           content.length > 50 ? content.substring(0, 50) + '...' : content
         );
+
+        // Gửi email notification nếu người nhận có bật email_notifications
+        if (prefs?.emailNotifications && author) {
+          const emailContent = notifyNewCommentEmail(
+            post.author?.name ?? 'Người dùng',
+            author.name,
+            author.username,
+            content,
+            post.content
+          );
+          await sendEmail({ to: post.author!.email, ...emailContent });
+        }
       }
     }
 

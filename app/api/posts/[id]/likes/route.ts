@@ -78,6 +78,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const prefs = await getUserPreferences(post.userId);
       if (prefs?.notificationSettings.likes !== false) {
         await createNotification(post.userId, 'like', payload.userId, id);
+        await pushSSEEvent(post.userId, 'notification:like', {
+          postId: id,
+          actorId: payload.userId,
+        });
 
         // Gửi email notification nếu người nhận có bật email_notifications
         if (prefs?.emailNotifications) {
