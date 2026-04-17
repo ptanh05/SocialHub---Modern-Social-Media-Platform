@@ -26,7 +26,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Lấy thông tin author cho mỗi comment
     const commentsWithAuthors = await Promise.all(
       comments.map(async (comment) => {
-        const author = await getUserById(comment.user_id);
+        const author = await getUserById(comment.userId);
         return {
           ...comment,
           author: author
@@ -88,18 +88,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     };
 
     // Tạo thông báo cho chủ bài viết (không thông báo chính mình)
-    if (post.user_id !== payload.userId) {
-      const prefs = await getUserPreferences(post.user_id);
+    if (post.userId !== payload.userId) {
+      const prefs = await getUserPreferences(post.userId);
       if (prefs?.notificationSettings.comments !== false) {
         await createNotification(
-          post.user_id,
+          post.userId,
           'comment',
           payload.userId,
           id,
           content.length > 50 ? content.substring(0, 50) + '...' : content
         );
         try {
-          await pushSSEEvent(post.user_id, 'notification:comment', {
+          await pushSSEEvent(post.userId, 'notification:comment', {
             postId: id,
             actorId: payload.userId,
             commentPreview: content.length > 50 ? content.substring(0, 50) + '...' : content,
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
         // Gửi email notification nếu người nhận có bật email_notifications
         if (prefs?.emailNotifications && author) {
-          const postAuthor = await getUserById(post.user_id);
+          const postAuthor = await getUserById(post.userId);
           if (postAuthor) {
             const emailContent = notifyNewCommentEmail(
               postAuthor.name,

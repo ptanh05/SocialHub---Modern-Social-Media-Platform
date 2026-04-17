@@ -29,7 +29,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    if (post.user_id !== payload.userId) {
+    if (post.userId !== payload.userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

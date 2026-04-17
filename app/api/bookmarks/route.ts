@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const posts = await getBookmarkedPosts(payload.userId);
     const postsWithAuthors = await Promise.all(
       posts.map(async (post) => {
-        const author = await getUserById(post.user_id);
+        const author = await getUserById(post.userId);
         return {
           ...post,
           author: author

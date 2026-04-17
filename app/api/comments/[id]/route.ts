@@ -25,7 +25,7 @@ export async function DELETE(
     }
 
     // Kiểm tra quyền sở hữu — chỉ người tạo bình luận hoặc chủ bài viết mới được xóa
-    if (comment.user_id !== payload.userId) {
+    if (comment.userId !== payload.userId) {
       return NextResponse.json({ error: 'Không có quyền xóa bình luận này' }, { status: 403 });
     }
 
