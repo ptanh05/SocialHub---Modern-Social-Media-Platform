@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
 
 interface User {
     id: string
@@ -28,14 +28,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null)
     const [loading, setLoading] = useState(true)
+    // Prevent multiple simultaneous refresh calls
+    const [refreshLock, setRefreshLock] = useState(false)
 
-    // 🔥 FETCH USER (CORE FIX)
-    const refreshUser = async () => {
+    // Fetch full user from /api/auth/me — use this AFTER login/register
+    const refreshUser = useCallback(async () => {
+        if (refreshLock) return
+        setRefreshLock(true)
         try {
             const res = await fetch('/api/auth/me', {
-                credentials: 'include', // 🔥 QUAN TRỌNG
+                credentials: 'include',
             })
-
             if (res.ok) {
                 const data = await res.json()
                 setUser(data)
@@ -47,83 +50,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(null)
         } finally {
             setLoading(false)
+            setRefreshLock(false)
         }
-    }
+    }, [refreshLock])
 
-    // 🔥 INIT APP
+    // Init — chỉ chạy 1 lần khi mount
     useEffect(() => {
         refreshUser()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    // 🔥 POLLING (optional nhưng tốt)
-    useEffect(() => {
-        const interval = setInterval(
-            async () => {
-                try {
-                    const res = await fetch('/api/auth/me', {
-                        credentials: 'include',
-                    })
-
-                    if (res.status === 401) {
-                        setUser(null)
-                    } else if (res.ok) {
-                        const data = await res.json()
-                        setUser(data)
-                    }
-                } catch (err) {
-                    console.error('Polling error:', err)
-                }
-            },
-            5 * 60 * 1000,
-        )
-
-        return () => clearInterval(interval)
-    }, [])
-
-    // 🔥 REGISTER
-    const register = async (email: string, username: string, password: string, name: string) => {
-        const res = await fetch('/api/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include', // 🔥 FIX
-            body: JSON.stringify({ email, username, password, name }),
-        })
-
-        if (!res.ok) {
-            const error = await res.json()
-            throw new Error(error.error || 'Registration failed')
-        }
-
-        const data = await res.json()
-        setUser(data.user)
-    }
-
-    // 🔥 LOGIN
     const login = async (email: string, password: string) => {
+        setLoading(true)
         const res = await fetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include', // 🔥 FIX
+            credentials: 'include',
             body: JSON.stringify({ email, password }),
         })
 
         if (!res.ok) {
+            setLoading(false)
             const error = await res.json()
-            throw new Error(error.error || 'Login failed')
+            throw new Error(error.error || 'Đăng nhập thất bại')
         }
 
-        const data = await res.json()
-        setUser(data.user)
+        // Sau login thành công, fetch full user từ /api/auth/me
+        await refreshUser()
     }
 
-    // 🔥 LOGOUT
+    const register = async (email: string, username: string, password: string, name: string) => {
+        setLoading(true)
+        const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ email, username, password, name }),
+        })
+
+        if (!res.ok) {
+            setLoading(false)
+            const error = await res.json()
+            throw new Error(error.error || 'Đăng ký thất bại')
+        }
+
+        // Sau register thành công, fetch full user từ /api/auth/me
+        await refreshUser()
+    }
+
     const logout = async () => {
         await fetch('/api/auth/logout', {
             method: 'POST',
-            credentials: 'include', // 🔥 FIX
+            credentials: 'include',
         })
-
         setUser(null)
+        setLoading(false)
     }
 
     return (
@@ -143,7 +124,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     )
 }
 
-// 🔥 HOOK
 export function useAuth() {
     const context = useContext(AuthContext)
     if (!context) {

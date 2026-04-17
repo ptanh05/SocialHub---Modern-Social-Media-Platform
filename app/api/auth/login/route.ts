@@ -3,6 +3,8 @@ import { loginSchema } from '@/lib/schemas';
 import { comparePassword, generateToken } from '@/lib/auth';
 import { getUserByEmail } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
