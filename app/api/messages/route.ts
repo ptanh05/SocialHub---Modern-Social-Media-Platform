@@ -49,11 +49,15 @@ export async function POST(request: NextRequest) {
     const message = await createMessage(payload.userId, receiverId, content);
 
     // Push real-time event to the recipient
-    await pushSSEEvent(receiverId, 'message:new', {
-      messageId: message.id,
-      senderId: payload.userId,
-      content,
-    });
+    try {
+      await pushSSEEvent(receiverId, 'message:new', {
+        messageId: message.id,
+        senderId: payload.userId,
+        content,
+      });
+    } catch (e) {
+      console.error('SSE push failed:', e);
+    }
 
     // Gửi email notification nếu người nhận có bật email_notifications
     const prefs = await getUserPreferences(receiverId);

@@ -26,7 +26,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Lấy thông tin author cho mỗi comment
     const commentsWithAuthors = await Promise.all(
       comments.map(async (comment) => {
-        const author = await getUserById(comment.userId);
+        const author = await getUserById(comment.user_id);
         return {
           ...comment,
           author: author
@@ -88,25 +88,29 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     };
 
     // Tạo thông báo cho chủ bài viết (không thông báo chính mình)
-    if (post.userId !== payload.userId) {
-      const prefs = await getUserPreferences(post.userId);
+    if (post.user_id !== payload.userId) {
+      const prefs = await getUserPreferences(post.user_id);
       if (prefs?.notificationSettings.comments !== false) {
         await createNotification(
-          post.userId,
+          post.user_id,
           'comment',
           payload.userId,
           id,
           content.length > 50 ? content.substring(0, 50) + '...' : content
         );
-        await pushSSEEvent(post.userId, 'notification:comment', {
-          postId: id,
-          actorId: payload.userId,
-          commentPreview: content.length > 50 ? content.substring(0, 50) + '...' : content,
-        });
+        try {
+          await pushSSEEvent(post.user_id, 'notification:comment', {
+            postId: id,
+            actorId: payload.userId,
+            commentPreview: content.length > 50 ? content.substring(0, 50) + '...' : content,
+          });
+        } catch (e) {
+          console.error('SSE push failed:', e);
+        }
 
         // Gửi email notification nếu người nhận có bật email_notifications
         if (prefs?.emailNotifications && author) {
-          const postAuthor = await getUserById(post.userId);
+          const postAuthor = await getUserById(post.user_id);
           if (postAuthor) {
             const emailContent = notifyNewCommentEmail(
               postAuthor.name,

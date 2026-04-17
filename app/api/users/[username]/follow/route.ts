@@ -65,15 +65,25 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       );
     }
 
-    await addFollow(payload.userId, targetUser.id);
+    const result = await addFollow(payload.userId, targetUser.id);
+    if (!result) {
+      return NextResponse.json(
+        { error: 'Đã theo dõi người dùng này' },
+        { status: 400 }
+      );
+    }
 
     // Tạo thông báo follow cho người được follow
     const prefs = await getUserPreferences(targetUser.id);
     if (prefs?.notificationSettings.follows !== false) {
       await createNotification(targetUser.id, 'follow', payload.userId);
-      await pushSSEEvent(targetUser.id, 'notification:follow', {
-        actorId: payload.userId,
-      });
+      try {
+        await pushSSEEvent(targetUser.id, 'notification:follow', {
+          actorId: payload.userId,
+        });
+      } catch (e) {
+        console.error('SSE push failed:', e);
+      }
 
       // Gửi email notification nếu người nhận có bật email_notifications
       if (prefs?.emailNotifications) {

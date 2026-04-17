@@ -74,19 +74,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const likeCount = await getLikeCount(id);
 
     // Tạo thông báo cho chủ bài viết (không thông báo chính mình)
-    if (post.userId !== payload.userId) {
-      const prefs = await getUserPreferences(post.userId);
+    if (post.user_id !== payload.userId) {
+      const prefs = await getUserPreferences(post.user_id);
       if (prefs?.notificationSettings.likes !== false) {
-        await createNotification(post.userId, 'like', payload.userId, id);
-        await pushSSEEvent(post.userId, 'notification:like', {
-          postId: id,
-          actorId: payload.userId,
-        });
+        await createNotification(post.user_id, 'like', payload.userId, id);
+        try {
+          await pushSSEEvent(post.user_id, 'notification:like', {
+            postId: id,
+            actorId: payload.userId,
+          });
+        } catch (e) {
+          console.error('SSE push failed:', e);
+        }
 
         // Gửi email notification nếu người nhận có bật email_notifications
         if (prefs?.emailNotifications) {
           const [postAuthor, liker] = await Promise.all([
-            getUserById(post.userId),
+            getUserById(post.user_id),
             getUserById(payload.userId),
           ]);
           if (postAuthor && liker) {

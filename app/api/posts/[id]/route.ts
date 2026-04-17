@@ -37,7 +37,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    if (post.userId !== payload.userId) {
+    if (post.user_id !== payload.userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

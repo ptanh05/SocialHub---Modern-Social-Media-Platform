@@ -5,19 +5,18 @@ import { consumeSSEEvents } from '@/lib/db';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+  const token = request.cookies.get('auth_token')?.value;
+  if (!token) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const payload = verifyToken(token);
+  if (!payload) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    const token = request.cookies.get('auth_token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const payload = verifyToken(token);
-    if (!payload) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const events = await consumeSSEEvents(payload.userId);
-
     return NextResponse.json(
       events.map(e => ({
         id:        e.id,
@@ -31,8 +30,11 @@ export async function GET(request: NextRequest) {
         },
       }
     );
-  } catch (error) {
-    console.error('Error fetching SSE events:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (e) {
+    // sse_events table may not exist in some environments
+    console.error('SSE events error:', e);
+    return NextResponse.json([], {
+      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' },
+    });
   }
 }

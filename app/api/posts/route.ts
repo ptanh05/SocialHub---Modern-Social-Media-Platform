@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     // Attach author info to each post
     const postsWithAuthors = await Promise.all(
       paginatedPosts.map(async (post) => {
-        const author = await getUserById(post.userId);
+        const author = await getUserById(post.user_id);
         return {
           ...post,
           author: author
