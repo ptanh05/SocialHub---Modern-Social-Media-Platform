@@ -659,19 +659,26 @@ export async function getConversation(userId1: string, userId2: string): Promise
 export async function getConversations(userId: string): Promise<Array<{ userId: string; lastMessage: Message }>> {
   await initSchema();
   const db = getDb();
+  // Neon tagged template: use array syntax to pass params
   const result = await db`
-    SELECT DISTINCT ON (
-      CASE WHEN sender_id = ${userId} THEN receiver_id ELSE sender_id END
+    SELECT m.*
+    FROM messages m
+    WHERE m.id = (
+      SELECT id FROM messages
+      WHERE (sender_id = ${userId} AND receiver_id = m.receiver_id)
+         OR (receiver_id = ${userId} AND sender_id = m.sender_id)
+      ORDER BY created_at DESC
+      LIMIT 1
     )
-    * FROM messages
-    WHERE sender_id = ${userId} OR receiver_id = ${userId}
-    ORDER BY
-      (CASE WHEN sender_id = ${userId} THEN receiver_id ELSE sender_id END),
-      created_at DESC
+    AND (m.sender_id = ${userId} OR m.receiver_id = ${userId})
+    ORDER BY m.created_at DESC
   `;
-  return result.map((r) => {
+
+  return result.map((r: Record<string, unknown>) => {
     const msg = row<Message>(r)!;
-    return { userId: msg.senderId === userId ? msg.receiverId : msg.senderId, lastMessage: msg };
+    const senderId = String(r.sender_id);
+    const receiverId = String(r.receiver_id);
+    return { userId: senderId === userId ? receiverId : senderId, lastMessage: msg };
   });
 }
 
