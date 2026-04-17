@@ -23,7 +23,7 @@ export async function GET(
     // Mark all messages as read
     for (const message of conversation) {
       const raw = message as unknown as Record<string, unknown>;
-      if (String(raw.receiver_id) === payload.userId && !message.read) {
+      if (String(message.receiverId) === payload.userId && !message.read) {
         await markMessageAsRead(message.id);
       }
     }
